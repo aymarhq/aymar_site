@@ -10,7 +10,7 @@ export const metadata: Metadata = {
   openGraph: { type: 'website', locale: 'pt_BR', url: '/', siteName: 'aymar', title: 'aymar — tecnologia aplicada', description: 'Software próprio, dados unificados e IA aplicada para operações que precisam avançar.' },
   twitter: { card: 'summary_large_image', title: 'aymar — tecnologia aplicada', description: 'Software próprio, dados unificados e IA aplicada para operações que precisam avançar.' },
   manifest: '/manifest.webmanifest',
-  icons: { icon: '/brand/aymar-wordmark-white.png', apple: '/brand/aymar-wordmark-white.png' }
+  icons: { icon: '/favicon.jpg', apple: '/favicon.jpg' }
 };
 
 export const viewport = { width: 'device-width', initialScale: 1, viewportFit: 'cover', themeColor: [{ media: '(prefers-color-scheme: dark)', color: '#0a0a0a' }, { media: '(prefers-color-scheme: light)', color: '#f5f4ef' }] };
