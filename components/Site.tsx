@@ -81,13 +81,16 @@ function Marquee({ light = false, children }: { light?: boolean; children: React
     measure();
     const observer = new ResizeObserver(measure);
     if (trackRef.current) observer.observe(trackRef.current);
-    const move = (event: MouseEvent) => {
+    let lastScroll = window.scrollY;
+    const scroll = () => {
       if (reduced.current) return;
-      velocity.current += event.movementX * 0.42;
+      const currentScroll = window.scrollY;
+      velocity.current += (currentScroll - lastScroll) * 0.18;
       velocity.current = Math.max(-24, Math.min(24, velocity.current));
+      lastScroll = currentScroll;
     };
-    window.addEventListener('mousemove', move, { passive: true });
-    return () => { observer.disconnect(); window.removeEventListener('mousemove', move); };
+    window.addEventListener('scroll', scroll, { passive: true });
+    return () => { observer.disconnect(); window.removeEventListener('scroll', scroll); };
   }, []);
 
   useAnimationFrame((_, delta) => {
@@ -101,7 +104,7 @@ function Marquee({ light = false, children }: { light?: boolean; children: React
     x.set(position.current);
   });
 
-  return <div className={`marquee ${light ? 'marquee-light' : ''}`}><motion.div ref={trackRef} className="marquee-track mouse-driven" style={{ x }}><div ref={groupRef} className="marquee-group">{sequence}</div><div className="marquee-group" aria-hidden="true">{sequence}</div></motion.div></div>;
+  return <div className={`marquee ${light ? 'marquee-light' : ''}`}><motion.div ref={trackRef} className="marquee-track scroll-driven" style={{ x }}><div ref={groupRef} className="marquee-group">{sequence}</div><div className="marquee-group" aria-hidden="true">{sequence}</div></motion.div></div>;
 }
 
 function ProjectCard({ index, dict, hoverLabel }: { index: number; dict: Dict; hoverLabel: string }) {
