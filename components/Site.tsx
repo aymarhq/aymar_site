@@ -83,12 +83,11 @@ function Dock() {
   return <div className={`dock ${open ? 'dock-open' : ''}`} ref={dockRef}>
     <AnimatePresence initial={false}>
       {open && <motion.nav id="dock-panel" className="dock-panel" aria-label="Navegação rápida" initial={{ opacity: 0, y: 12, scale: .96 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, y: 12, scale: .96 }}><BrandLogo size="sm" className="dock-brand" />
-        <a href="#studio" onClick={close}>studio</a><a href="#trabalhos" onClick={close}>trabalhos</a><a href="#processo" onClick={close}>processo</a><a href="#contato" onClick={close}>contato</a><a href="https://www.instagram.com/aymarhq/" target="_blank" rel="noopener noreferrer" onClick={close}>instagram ↗</a>
+        <a href="#studio" onClick={close}>studio</a><a href="#trabalhos" onClick={close}>trabalhos</a><a href="#processo" onClick={close}>processo</a><a href="#contato" onClick={close}>contato</a><a href="https://www.instagram.com/aymarhq/" target="_blank" rel="noopener noreferrer" onClick={close}>instagram ↗</a><button className="dock-button dock-theme" aria-label={`Ativar tema ${theme === 'dark' ? 'claro' : 'escuro'}`} aria-pressed={theme === 'light'} onClick={toggleTheme}><span className="dock-sun">{theme === 'dark' ? '☼' : '◐'}</span><span>{theme === 'dark' ? 'claro' : 'escuro'}</span></button>
       </motion.nav>}
     </AnimatePresence>
     <div className="dock-bar">
       <button ref={triggerRef} className="dock-button" aria-label={open ? 'Fechar navegação' : 'Abrir navegação'} aria-expanded={open} aria-controls="dock-panel" onClick={() => setOpen(value => !value)}><span className={`dock-menu-icon ${open ? 'is-open' : ''}`}><i /><i /></span><span>menu</span></button>
-      <button className="dock-button dock-theme" aria-label={`Ativar tema ${theme === 'dark' ? 'claro' : 'escuro'}`} aria-pressed={theme === 'light'} onClick={toggleTheme}><span className="dock-sun">{theme === 'dark' ? '☼' : '◐'}</span><span>{theme === 'dark' ? 'claro' : 'escuro'}</span></button>
       <i className="dock-dot" aria-hidden="true" />
     </div>
   </div>;
