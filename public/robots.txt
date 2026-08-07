@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://aymar.com.br/sitemap.xml
