@@ -2,7 +2,7 @@
 
 import Image from 'next/image';
 import Link from 'next/link';
-import { AnimatePresence, motion, useMotionValue, useSpring } from 'framer-motion';
+import { AnimatePresence, motion, useAnimationFrame, useMotionValue, useSpring } from 'framer-motion';
 import { useEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode } from 'react';
 import BrandLogo from './BrandLogo';
 import { getWhatsAppUrl } from '../lib/site';
@@ -65,7 +65,44 @@ function Dock({ dict }: { dict: Dict }) {
   return <div className={`dock ${open ? 'dock-open' : ''}`} ref={dockRef}><AnimatePresence initial={false}>{open && <motion.nav id="dock-panel" className="dock-panel" initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 12 }}><BrandLogo size="sm" className="dock-brand" label={dict.brand} /><a href="#studio" onClick={() => setOpen(false)}>{dict.nav.studio}</a><a href="#trabalhos" onClick={() => setOpen(false)}>{dict.nav.work}</a><a href="#processo" onClick={() => setOpen(false)}>{dict.nav.process}</a><a href="#especialista" onClick={() => setOpen(false)}>{dict.nav.specialist}</a><a href="#contato" onClick={() => setOpen(false)}>{dict.nav.contact}</a><button className="dock-button dock-theme" onClick={toggleTheme}><span className="dock-sun">{theme === 'dark' ? '☼' : '◐'}</span>{theme === 'dark' ? 'light' : 'dark'}</button></motion.nav>}</AnimatePresence><div className="dock-bar"><button ref={triggerRef} className="dock-button" aria-label={dict.nav.menu} aria-expanded={open} aria-controls="dock-panel" onClick={() => setOpen(value => !value)}><span className={`dock-menu-icon ${open ? 'is-open' : ''}`}><i /><i /></span><span>{dict.nav.menu}</span></button><i className="dock-dot" aria-hidden="true" /></div></div>;
 }
 
-function Marquee({ light = false, children }: { light?: boolean; children: ReactNode }) { const sequence = Array.from({ length: 6 }, (_, index) => <span className="marquee-item" key={index}>{children}</span>); return <div className={`marquee ${light ? 'marquee-light' : ''}`}><div className="marquee-track"><div className="marquee-group">{sequence}</div><div className="marquee-group" aria-hidden="true">{sequence}</div></div></div>; }
+function Marquee({ light = false, children }: { light?: boolean; children: ReactNode }) {
+  const trackRef = useRef<HTMLDivElement>(null);
+  const groupRef = useRef<HTMLDivElement>(null);
+  const x = useMotionValue(0);
+  const position = useRef(0);
+  const velocity = useRef(0);
+  const groupWidth = useRef(0);
+  const reduced = useRef(false);
+  const sequence = Array.from({ length: 6 }, (_, index) => <span className="marquee-item" key={index}>{children}</span>);
+
+  useEffect(() => {
+    reduced.current = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const measure = () => { groupWidth.current = groupRef.current?.getBoundingClientRect().width || 0; };
+    measure();
+    const observer = new ResizeObserver(measure);
+    if (trackRef.current) observer.observe(trackRef.current);
+    const move = (event: MouseEvent) => {
+      if (reduced.current) return;
+      velocity.current += event.movementX * 0.42;
+      velocity.current = Math.max(-24, Math.min(24, velocity.current));
+    };
+    window.addEventListener('mousemove', move, { passive: true });
+    return () => { observer.disconnect(); window.removeEventListener('mousemove', move); };
+  }, []);
+
+  useAnimationFrame((_, delta) => {
+    if (reduced.current || !groupWidth.current) return;
+    position.current += velocity.current * (delta / 16.67);
+    velocity.current *= Math.pow(0.9, delta / 16.67);
+    if (Math.abs(velocity.current) < 0.01) velocity.current = 0;
+    const width = groupWidth.current;
+    while (position.current <= -width) position.current += width;
+    while (position.current > 0) position.current -= width;
+    x.set(position.current);
+  });
+
+  return <div className={`marquee ${light ? 'marquee-light' : ''}`}><motion.div ref={trackRef} className="marquee-track mouse-driven" style={{ x }}><div ref={groupRef} className="marquee-group">{sequence}</div><div className="marquee-group" aria-hidden="true">{sequence}</div></motion.div></div>;
+}
 
 function ProjectCard({ index, dict, hoverLabel }: { index: number; dict: Dict; hoverLabel: string }) {
   const project = dict.projects[index]; const info = projectInfo[index]; const [loaded, setLoaded] = useState(false);

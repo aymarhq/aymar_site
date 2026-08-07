@@ -238,3 +238,4 @@ html,body{overflow-x:clip}
 .projects-wall .preview-frame,.projects-wall .project-art{aspect-ratio:1 / 1}
 @media(min-width:720px){.projects-wall{row-gap:clamp(36px,5vw,84px)}}
 @media(max-width:719px){.projects-wall{row-gap:48px}.projects-wall .project-card{margin-bottom:0}}
+ .marquee-track.mouse-driven{animation:none}
