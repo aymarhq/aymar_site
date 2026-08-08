@@ -253,6 +253,9 @@ html[data-theme=dark] .brand-logo img{filter:none}
 body{font-family:Inter,Arial,sans-serif}
 html,body{overflow-x:clip}
 
+/* Circular arrow controls keep the SVG optically centered. */
+.scroll-arrow .ui-icon,.back-to-top .ui-icon{display:block;width:24px;height:24px;margin:0}
+
 /* Final work-grid override: square previews with clear vertical rhythm. */
 .projects-wall .preview-frame,.projects-wall .project-art{aspect-ratio:1 / 1}
 @media(min-width:720px){.projects-wall{row-gap:clamp(36px,5vw,84px)}}
