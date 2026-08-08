@@ -78,8 +78,25 @@ function BackToTop({ lang }: { lang: Dict['lang'] }) {
   return <button type="button" className={`back-to-top ${visible ? 'is-visible' : ''}`} aria-label={lang === 'en' ? 'Back to top' : 'Voltar ao topo'} onClick={goTop}><ArrowUp /></button>;
 }
 
+function useReveal(variant: string, delay = 0) {
+  const ref = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const element = ref.current;
+    if (!element) return;
+    element.dataset.reveal = variant;
+    element.style.setProperty('--reveal-delay', `${delay}ms`);
+    element.classList.add('reveal-ready');
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) { element.classList.add('is-revealed'); return; }
+    const observer = new IntersectionObserver(([entry]) => { if (entry.isIntersecting) { element.classList.add('is-revealed'); observer.disconnect(); } }, { threshold: .15, rootMargin: '0px 0px -10% 0px' });
+    observer.observe(element);
+    return () => observer.disconnect();
+  }, [delay, variant]);
+  return ref;
+}
+
 function ProcessItem({ item, index }: { item: Dict['process']['items'][number]; index: number }) {
-  return <motion.div className="process-item" initial={{ opacity: 0, y: 16 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true, amount: .15 }} transition={{ delay: index * .1, duration: .5 }}><span>0{index + 1}</span><div><h3>{item.title}</h3><p>{item.text}</p></div><b><ArrowUpRight /></b></motion.div>;
+  const revealRef = useReveal('fade-up', index * 90);
+  return <div ref={revealRef} className="process-item" data-cursor="etapa"><span>0{index + 1}</span><div><h3>{item.title}</h3><p>{item.text}</p></div><b><ArrowUpRight /></b></div>;
 }
 
 function Marquee({ light = false, children }: { light?: boolean; children: ReactNode }) {
@@ -129,9 +146,26 @@ function ProjectCard({ index, dict, hoverLabel }: { index: number; dict: Dict; h
   return <motion.article className="project-card" data-cursor={hoverLabel} initial={{ opacity: 0, y: 16 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true, margin: '-10%' }} transition={{ delay: index * .04, duration: .5 }}><div className="project-top"><span>{String(index + 1).padStart(2, '0')}</span><b>{project.badge}</b></div><a className="preview-frame" href={info.url} target="_blank" rel="noopener noreferrer"><div className="project-art" style={{ '--project-bg': info.colors.background } as CSSProperties}><div className={`project-art-placeholder ${loaded ? 'is-hidden' : ''}`}><span>{String(index + 1).padStart(2, '0')}</span><strong>{project.title}</strong><small>{dict.work.preview}</small></div><Image src={`/references/${info.slug}.png`} alt={`Landing page ${project.title} — ${project.category}`} fill sizes="(max-width: 719px) 88vw, (max-width: 900px) 42vw, 28vw" className={`project-art-image ${loaded ? 'is-loaded' : 'is-hidden'}`} onLoad={() => setLoaded(true)} /></div></a><a className="project-info" href={info.url} target="_blank" rel="noopener noreferrer"><div><h3>{project.title}</h3><p>{project.meta}</p></div><span> <ArrowRight /></span></a></motion.article>;
 }
 
-function ChatbotDemo({ dict, running }: { dict: Dict; running: boolean }) {
+function ChatbotDemoSynced({ dict, running }: { dict: Dict; running: boolean }) {
   const messages = dict.specialist.chatbot.customer.flatMap((customer, index) => [{ text: customer, side: 'received', key: `c${index}` }, { text: dict.specialist.chatbot.bot[index], side: 'sent', key: `b${index}` }]);
-  return <div className={`demo-stage demo-chat ${running ? 'is-running' : ''}`}><span className="demo-label">{dict.specialist.demo}</span><div className="chat-demo-layout"><div className="phone-shell"><div className="phone-top"><i className="chat-avatar">C</i><span><b>Cliente · WhatsApp Business</b><small><span className="chat-online">online</span><span className="chat-thinking">digitando...</span></small></span><b>···</b></div><div className="chat-list">{messages.map((message, index) => <div className={`chat-row ${message.side} ${index % 2 === 0 ? 'has-tail' : ''}`} key={message.key} style={{ '--delay': `${index * 1.15}s` } as CSSProperties}><div className="chat-bubble">{message.text}<small>{index % 2 ? <><span>{dict.ui.sentTime.split(' ')[0]}</span> <CheckDouble className="chat-check" /></> : dict.ui.receivedTime}</small></div></div>)}<div className="chat-typing"><i /><i /><i /><span>digitando...</span></div></div><div className="chat-input"><span>Digite uma mensagem</span><b> <ArrowUp /></b></div></div><div className="chat-flow"><h3>{dict.lang === 'en' ? 'WHAT HAPPENS BEHIND THE SCENES' : 'O QUE ACONTECE POR TRÁS'}</h3>{dict.specialist.chatbot.flow.map((step, index) => <div className="chat-flow-step" key={step}><b>{String(index + 1).padStart(2, '0')}</b><i /><span>{step}</span></div>)}</div></div></div>;
+  const [typingFor, setTypingFor] = useState<number | null>(null);
+  useEffect(() => {
+    if (!running) { setTypingFor(null); return; }
+    let botIndex = 0;
+    const timers: number[] = [];
+    const start = () => {
+      setTypingFor(botIndex);
+      timers.push(window.setTimeout(() => {
+        setTypingFor(null);
+        botIndex = (botIndex + 1) % dict.specialist.chatbot.bot.length;
+        timers.push(window.setTimeout(start, botIndex === 0 ? 2000 : 350));
+      }, 1000));
+    };
+    timers.push(window.setTimeout(start, 700));
+    return () => timers.forEach(timer => window.clearTimeout(timer));
+  }, [dict.specialist.chatbot.bot.length, running]);
+  const isTyping = typingFor !== null;
+  return <div className={`demo-stage demo-chat ${running ? 'is-running' : ''}`}><span className="demo-label">{dict.specialist.demo}</span><div className="chat-demo-layout"><div className="phone-shell"><div className="phone-top"><i className="chat-avatar">C</i><span><strong className="chat-contact-name">{dict.lang === 'en' ? 'Customer' : 'Cliente'}</strong><small className={isTyping ? 'is-typing' : ''}><span className="chat-online">online</span><span className="chat-thinking">digitando...</span></small></span><strong className="chat-menu">···</strong></div><div className="chat-list">{messages.map((message, index) => <div className={`chat-row ${message.side} ${index % 2 === 0 ? 'has-tail' : ''}`} key={message.key} style={{ '--delay': `${index * 1.15}s` } as CSSProperties}><div className="chat-bubble">{message.text}<small>{index % 2 ? <><span>{dict.ui.sentTime.split(' ')[0]}</span> <CheckDouble className="chat-check" /></> : dict.ui.receivedTime}</small></div></div>)}{isTyping && <div className="chat-typing"><i /><i /><i /><span>digitando...</span></div>}</div><div className="chat-input"><span>Digite uma mensagem</span><b><ArrowUp /></b></div></div><div className="chat-flow"><small className="chat-channel-label">{dict.lang === 'en' ? 'WhatsApp Business' : 'WhatsApp Business'}</small><h3>{dict.lang === 'en' ? 'WHAT HAPPENS BEHIND THE SCENES' : 'O QUE ACONTECE POR TRÁS'}</h3>{dict.specialist.chatbot.flow.map((step, index) => <div className="chat-flow-step" key={step}><b>{String(index + 1).padStart(2, '0')}</b><i /><span>{step}</span></div>)}</div></div></div>;
 }
 
 function RepetitiveDemo({ dict, running }: { dict: Dict; running: boolean }) {
@@ -156,7 +190,7 @@ function SpecialistDemos({ dict }: { dict: Dict }) {
   const running = visible && !reduced;
   const chooseTab = (index: number) => { setAutoplay(false); setActive(index); };
   const onTabKeyDown = (event: KeyboardEvent<HTMLButtonElement>) => { if (event.key === 'ArrowRight' || event.key === 'ArrowDown') { event.preventDefault(); chooseTab((active + 1) % 3); } else if (event.key === 'ArrowLeft' || event.key === 'ArrowUp') { event.preventDefault(); chooseTab((active + 2) % 3); } };
-  return <div className={`specialist-demos ${autoplay ? 'is-autoplay' : 'is-manual'} `} ref={sectionRef}><div className="demo-tabs" role="tablist">{dict.specialist.tabs.map((tab, index) => <button key={tab.label} role="tab" tabIndex={active === index ? 0 : -1} aria-selected={active === index} className={active === index ? 'is-active' : ''} data-cursor="trocar" onClick={() => chooseTab(index)} onKeyDown={onTabKeyDown}><span>{tab.label}</span>{autoplay && <i />}</button>)}</div><div className="demo-layout"><div className="demo-stage-wrap"><AnimatePresence mode="wait"><motion.div key={active} className="demo-animated" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: .3 }}>{active === 0 ? <ChatbotDemo dict={dict} running={running} /> : active === 1 ? <RepetitiveDemo dict={dict} running={running} /> : <DashboardDemo dict={dict} running={running} />}</motion.div></AnimatePresence></div><p className="demo-copy">{dict.specialist.tabs[active].text}</p></div></div>;
+  return <div className={`specialist-demos ${autoplay ? 'is-autoplay' : 'is-manual'} `} ref={sectionRef}><div className="demo-tabs" role="tablist">{dict.specialist.tabs.map((tab, index) => <button key={tab.label} role="tab" tabIndex={active === index ? 0 : -1} aria-selected={active === index} className={active === index ? 'is-active' : ''} data-cursor="trocar" onClick={() => chooseTab(index)} onKeyDown={onTabKeyDown}><span>{tab.label}</span>{autoplay && <i />}</button>)}</div><div className="demo-layout"><div className="demo-stage-wrap"><AnimatePresence mode="wait"><motion.div key={active} className="demo-animated" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: .3 }}>{active === 0 ? <ChatbotDemoSynced dict={dict} running={running} /> : active === 1 ? <RepetitiveDemo dict={dict} running={running} /> : <DashboardDemo dict={dict} running={running} />}</motion.div></AnimatePresence></div><p className="demo-copy">{dict.specialist.tabs[active].text}</p></div></div>;
 }
 
 export default function Site({ dict }: { dict: Dict }) {
