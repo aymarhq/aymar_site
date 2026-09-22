@@ -6,7 +6,7 @@ import { AnimatePresence, motion, useAnimationFrame, useMotionValue, useSpring }
 import gsap from 'gsap';
 import { useEffect, useMemo, useRef, useState, type CSSProperties, type KeyboardEvent, type MouseEvent as ReactMouseEvent, type PointerEvent as ReactPointerEvent, type ReactNode } from 'react';
 import BrandLogo from './BrandLogo';
-import { ArrowDown, ArrowRight, ArrowUp, ArrowUpRight, CheckDouble } from './Icon';
+import { ArrowDown, ArrowLeft, ArrowRight, ArrowUp, ArrowUpRight, CheckDouble } from './Icon';
 import { getWhatsAppUrl, WHATSAPP_URL } from '../lib/site';
 import type { Dict } from '../dictionaries/pt';
 
@@ -128,7 +128,7 @@ function VideoCard({ item, index }: { item: typeof videoWorks[number]; index: nu
 function VideosSection() {
   const carouselRef = useRef<HTMLDivElement>(null);
   const moveCarousel = (direction: number) => carouselRef.current?.scrollBy({ left: direction * (carouselRef.current.clientWidth * .82), behavior: 'smooth' });
-  return <section id="videos" className="videos dark"><div className="eyebrow">01 veja o que o time entrega</div><div className="videos-intro"><h2>Seu anúncio precisa<br /><em>parar o scroll.</em></h2><p>Vídeos 9:16 com hook, ritmo e mensagem para chamar atenção no Instagram e no Facebook — e levar a pessoa até o WhatsApp.</p></div><div className="video-carousel" ref={carouselRef}><div className="video-wall">{videoWorks.map((item, index) => <VideoCard key={item.source} item={item} index={index} />)}</div></div><div className="video-controls"><button type="button" onClick={() => moveCarousel(-1)} aria-label="Ver vídeos anteriores">←</button><small>ARRASTE OU USE AS SETAS</small><button type="button" onClick={() => moveCarousel(1)} aria-label="Ver próximos vídeos">→</button></div><small className="videos-note">PASSE O MOUSE PARA VER · CLIQUE NO ÍCONE PARA ATIVAR O SOM</small><div className="proof-strip" aria-label="Números da operação Aymar Labs"><div><strong>+2M</strong><span>de reais faturados</span></div><div><strong>LATAM</strong><span>operação internacional</span></div><div><strong>+100</strong><span>criativos feitos</span></div></div></section>;
+  return <section id="videos" className="videos dark"><div className="eyebrow">01 veja o que o time entrega</div><div className="videos-intro"><h2>Seu anúncio precisa<br /><em>parar o scroll.</em></h2><p>Vídeos 9:16 com hook, ritmo e mensagem para chamar atenção no Instagram e no Facebook — e levar a pessoa até o WhatsApp.</p></div><div className="video-carousel" ref={carouselRef}><div className="video-wall">{videoWorks.map((item, index) => <VideoCard key={item.source} item={item} index={index} />)}</div></div><div className="video-controls"><button type="button" onClick={() => moveCarousel(-1)} aria-label="Ver vídeos anteriores"><ArrowLeft /></button><small>ARRASTE OU USE AS SETAS</small><button type="button" onClick={() => moveCarousel(1)} aria-label="Ver próximos vídeos"><ArrowRight /></button></div><small className="videos-note">PASSE O MOUSE PARA VER · CLIQUE NO ÍCONE PARA ATIVAR O SOM</small><div className="proof-strip" aria-label="Números da operação Aymar Labs"><div><strong>+2M</strong><span>de reais faturados</span></div><div><strong>LATAM</strong><span>operação internacional</span></div><div><strong>+100</strong><span>criativos feitos</span></div></div></section>;
 }
 
 function OfferSection({ dict, whatsappUrl }: { dict: Dict; whatsappUrl: string }) {
