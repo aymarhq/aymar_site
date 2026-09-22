@@ -1,4 +1,4 @@
-export const WHATSAPP_NUMBER = "5598920064382";
+export const WHATSAPP_NUMBER = "5598985190160";
 export const SITE_URL = "https://aymar.vercel.app";
 export const WHATSAPP_MSG = "Oi! Vim pelo site da Aymar. Queria falar sobre a operação da minha empresa.";
 export const WHATSAPP_URL =
