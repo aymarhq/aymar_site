@@ -22,7 +22,7 @@ export type Dict = {
   ui: { languageSelector: string; openMenu: string; closeMenu: string; phone: string; live: string; dataToday: string; revenue: string; automation: string; receivedTime: string; sentTime: string };
   metadata: { title: string; description: string };
   loader: string;
-  nav: { studio: string; work: string; process: string; how: string; specialist: string; contact: string; cta: string; menu: string };
+  nav: { studio: string; work: string; process: string; how: string; contact: string; cta: string; menu: string };
   hero: { eyebrow: string; title: string; emphasis: string; paragraph: string; cta: string; location: string };
   marquee: { first: string; second: string };
   studio: { eyebrow: string; title: string; emphasis: string; paragraph: string };
@@ -49,7 +49,7 @@ export const pt: Dict = {
   lang: 'pt', htmlLang: 'pt-BR', locale: 'pt_BR', language: { switchPt: 'Mudar para português', switchEn: 'Mudar para inglês' }, brand: 'Aymar Labs, início', ui: { languageSelector: 'Seletor de idioma', openMenu: 'Abrir menu', closeMenu: 'Fechar menu', phone: 'operação', live: 'ao vivo', dataToday: 'operação / hoje / dados', revenue: 'receita', automation: 'automação', receivedTime: '15:03', sentTime: '15:04' },
   metadata: { title: 'Aymar Labs — criativos e ofertas que vendem', description: 'A operação criativa por trás de ofertas que vendem no WhatsApp.' },
   loader: 'carregando oferta',
-  nav: { studio: 'vídeos', work: 'trabalhos', process: 'entrega', how: 'como funciona', specialist: 'time Aymar', contact: 'contato', cta: 'vamos conversar', menu: 'menu' },
+  nav: { studio: 'vídeos', work: 'trabalhos', process: 'entrega', how: 'como funciona', contact: 'contato', cta: 'vamos conversar', menu: 'menu' },
   hero: { eyebrow: 'aymar labs · operação criativa para ofertas low ticket', title: 'Sua oferta no ar.', emphasis: 'Do criativo à venda.', paragraph: 'A Aymar Labs cria os vídeos, a copy, as páginas, os e-books e os fluxos que sua oferta precisa para sair do papel, gerar conversa e vender no 1:1.', cta: 'quero colocar minha oferta no ar', location: 'Brasil · operação LATAM' },
   marquee: { first: 'criativos que param o scroll ✳ copy que conduz à compra ✳ ofertas low ticket ✳ páginas e e-books ✳ fluxos de WhatsApp ✳', second: 'da atenção à conversa ✳ da conversa à venda ✳' },
   studio: { eyebrow: '01 o que eu faço', title: 'Não entrego só um vídeo.', emphasis: 'Monto o caminho da venda.', paragraph: 'A Aymar junta estratégia, copy e criação para transformar uma ideia em uma oferta pronta para vender. Do hook do anúncio ao fluxo de chatbot no WhatsApp, cada peça trabalha para a próxima.' },
