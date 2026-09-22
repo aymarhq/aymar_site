@@ -1,15 +1,15 @@
 {
-  "name": "Aymar — tecnologia aplicada",
-  "short_name": "Aymar",
-  "description": "Software próprio, dados unificados e IA aplicada para operações que precisam avançar.",
+  "name": "Aymar Labs — creative commerce",
+  "short_name": "Aymar Labs",
+  "description": "A operação criativa por trás de ofertas que vendem no WhatsApp.",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#0a0a0a",
   "theme_color": "#0a0a0a",
   "lang": "pt-BR",
   "icons": [{
-    "src": "/brand/aymar-wordmark-white.png",
-    "sizes": "3150x863",
+    "src": "/favicon.png",
+    "sizes": "2984x2984",
     "type": "image/png",
     "purpose": "any maskable"
   }]

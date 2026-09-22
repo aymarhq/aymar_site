@@ -1,8 +1,8 @@
 import type { Dict } from './pt';
 
 export const en: Dict = {
-  lang: 'en', htmlLang: 'en', locale: 'en_US', language: { switchPt: 'Switch to Portuguese', switchEn: 'Switch to English' }, brand: 'Aymar, home', ui: { languageSelector: 'Language selector', openMenu: 'Open menu', closeMenu: 'Close menu', phone: 'operation', live: 'live', dataToday: 'operation / today / data', revenue: 'revenue', automation: 'automation', receivedTime: '15:03', sentTime: '15:04' },
-  metadata: { title: 'Aymar — applied technology', description: 'Custom software, unified data and applied AI for operations that need to move.' },
+  lang: 'en', htmlLang: 'en', locale: 'en_US', language: { switchPt: 'Switch to Portuguese', switchEn: 'Switch to English' }, brand: 'Aymar Labs, home', ui: { languageSelector: 'Language selector', openMenu: 'Open menu', closeMenu: 'Close menu', phone: 'operation', live: 'live', dataToday: 'operation / today / data', revenue: 'revenue', automation: 'automation', receivedTime: '15:03', sentTime: '15:04' },
+  metadata: { title: 'Aymar Labs — creative commerce', description: 'The creative operation behind offers that sell on WhatsApp.' },
   loader: 'loading operation',
   nav: { studio: 'studio', work: 'work', process: 'process', how: 'how it works', specialist: 'specialist', contact: 'contact', cta: "let's talk", menu: 'menu' },
   hero: { eyebrow: 'custom software · unified data · applied ai', title: 'The smart operation', emphasis: 'behind it all.', paragraph: 'We build the engine that runs your business. Software made to measure, data that actually talks to itself, and AI that takes over the steps nobody should be doing by hand.', cta: 'talk to a specialist', location: 'Brazil — remote' },

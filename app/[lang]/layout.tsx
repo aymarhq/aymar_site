@@ -11,13 +11,13 @@ export async function generateMetadata({ params }: { params: Promise<{ lang: str
   const path = lang === 'en' ? '/en' : '/';
   return {
     metadataBase: new URL(SITE_URL),
-    title: { default: dict.metadata.title, template: '%s — Aymar' },
+    title: { default: dict.metadata.title, template: '%s — Aymar Labs' },
     description: dict.metadata.description,
     alternates: { canonical: `${SITE_URL}${path}`, languages: { 'pt-BR': `${SITE_URL}/`, en: `${SITE_URL}/en`, 'x-default': `${SITE_URL}/` } },
     robots: { index: true, follow: true, googleBot: { index: true, follow: true, 'max-image-preview': 'large' } },
-    openGraph: { type: 'website', locale: dict.locale, url: `${SITE_URL}${path}`, siteName: 'Aymar', title: dict.metadata.title, description: dict.metadata.description, images: [{ url: `${SITE_URL}/opengraph-image`, width: 1200, height: 630, alt: 'Aymar — tecnologia aplicada' }] },
-    twitter: { card: 'summary_large_image', title: dict.metadata.title, description: dict.metadata.description, images: [{ url: `${SITE_URL}/opengraph-image`, alt: 'Aymar — tecnologia aplicada' }] },
-    manifest: '/manifest.webmanifest', icons: { icon: '/favicon.jpg', apple: '/favicon.jpg' }
+    openGraph: { type: 'website', locale: dict.locale, url: `${SITE_URL}${path}`, siteName: 'Aymar Labs', title: dict.metadata.title, description: dict.metadata.description, images: [{ url: `${SITE_URL}/opengraph-image`, width: 1200, height: 630, alt: 'Aymar Labs — creative commerce' }] },
+    twitter: { card: 'summary_large_image', title: dict.metadata.title, description: dict.metadata.description, images: [{ url: `${SITE_URL}/opengraph-image`, alt: 'Aymar Labs — creative commerce' }] },
+    manifest: '/manifest.webmanifest', icons: { icon: '/favicon.png', apple: '/favicon.png' }
   };
 }
 
