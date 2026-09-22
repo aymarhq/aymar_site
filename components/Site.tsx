@@ -166,7 +166,7 @@ function useReveal(variant: string, delay = 0) {
 
 function ProcessItem({ item, index }: { item: Dict['process']['items'][number]; index: number }) {
   const revealRef = useReveal('fade-up', index * 90);
-  return <div ref={revealRef} className="process-item" data-cursor="etapa"><span>0{index + 1}</span><div><h3>{item.title}</h3><p>{item.text}</p></div><b><ArrowUpRight /></b></div>;
+  return <div ref={revealRef} className="process-item"><span>0{index + 1}</span><div><h3>{item.title}</h3><p>{item.text}</p></div></div>;
 }
 
 function Marquee({ light = false, children }: { light?: boolean; children: ReactNode }) {
@@ -213,7 +213,7 @@ function Marquee({ light = false, children }: { light?: boolean; children: React
 
 function ProjectCard({ index, dict, hoverLabel }: { index: number; dict: Dict; hoverLabel: string }) {
   const project = dict.projects[index]; const info = projectInfo[index]; const [loaded, setLoaded] = useState(false);
-  return <motion.article className="project-card" data-cursor={hoverLabel} initial={{ opacity: 0, y: 16 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true, margin: '-10%' }} transition={{ delay: index * .04, duration: .5 }}><div className="project-top"><span>{String(index + 1).padStart(2, '0')}</span><b>{project.badge}</b></div><a className="preview-frame" href={info.url} target="_blank" rel="noopener noreferrer"><div className="project-art" style={{ '--project-bg': info.colors.background } as CSSProperties}><div className={`project-art-placeholder ${loaded ? 'is-hidden' : ''}`}><span>{String(index + 1).padStart(2, '0')}</span><strong>{project.title}</strong><small>{dict.work.preview}</small></div><Image src={`/references/${info.slug}.png`} alt={`Landing page ${project.title} — ${project.category}`} fill sizes="(max-width: 719px) 88vw, (max-width: 900px) 42vw, 28vw" className={`project-art-image ${loaded ? 'is-loaded' : 'is-hidden'}`} onLoad={() => setLoaded(true)} /></div></a><a className="project-info" href={info.url} target="_blank" rel="noopener noreferrer"><div><h3>{project.title}</h3><p>{project.meta}</p></div><span> <ArrowRight /></span></a></motion.article>;
+  return <motion.article className={`project-card project-${info.slug}`} data-cursor={hoverLabel} initial={{ opacity: 0, y: 16 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true, margin: '-10%' }} transition={{ delay: index * .04, duration: .5 }}><div className="project-top"><span>{String(index + 1).padStart(2, '0')}</span><b>{project.badge}</b></div><a className="preview-frame" href={info.url} target="_blank" rel="noopener noreferrer"><div className="project-art" style={{ '--project-bg': info.colors.background } as CSSProperties}><div className={`project-art-placeholder ${loaded ? 'is-hidden' : ''}`}><span>{String(index + 1).padStart(2, '0')}</span><strong>{project.title}</strong><small>{dict.work.preview}</small></div><Image src={`/references/${info.slug}.png`} alt={`Landing page ${project.title} — ${project.category}`} fill sizes="(max-width: 719px) 88vw, (max-width: 900px) 42vw, 28vw" className={`project-art-image ${loaded ? 'is-loaded' : 'is-hidden'}`} onLoad={() => setLoaded(true)} /></div></a><a className="project-info" href={info.url} target="_blank" rel="noopener noreferrer"><div><h3>{project.title}</h3><p>{project.meta}</p></div><span> <ArrowRight /></span></a></motion.article>;
 }
 
 function ChatbotDemoSynced({ dict, running }: { dict: Dict; running: boolean }) {
