@@ -73,6 +73,7 @@ function HowSection({ dict, whatsappUrl }: { dict: Dict; whatsappUrl: string }) 
 }
 
 const videoWorks = [
+  { title: 'Copy para bolo', meta: 'vídeo de vendas · 9:16', source: '/videos/ctv_copy1_bolo.mp4' },
   { title: 'Criativo UGC', meta: 'vídeo de vendas · 9:16', source: '/videos/c_ctv9_UGC3.mp4' },
   { title: 'Variação para anúncio', meta: 'reels · performance', source: '/videos/A1_Model.mp4' },
   { title: 'Hook de campanha', meta: 'hook · WhatsApp X1', source: '/videos/e_a2.mp4' },
