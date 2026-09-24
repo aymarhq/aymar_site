@@ -73,12 +73,12 @@ function HowSection({ dict, whatsappUrl }: { dict: Dict; whatsappUrl: string }) 
 }
 
 const videoWorks = [
-  { title: 'Copy para bolo', meta: 'vídeo de vendas · 9:16', source: '/videos/ctv_copy1_bolo.mp4' },
-  { title: 'Criativo UGC', meta: 'vídeo de vendas · 9:16', source: '/videos/c_ctv9_UGC3.mp4' },
-  { title: 'Variação para anúncio', meta: 'reels · performance', source: '/videos/A1_Model.mp4' },
-  { title: 'Hook de campanha', meta: 'hook · WhatsApp X1', source: '/videos/e_a2.mp4' },
-  { title: 'Oferta em movimento', meta: 'criativo · conversão', source: '/videos/Copy_1.mp4' },
-  { title: 'Prova e desejo', meta: 'UGC · anúncio', source: '/videos/ctv1_2.mp4' },
+  { title: 'Copy para bolo', meta: 'vídeo de vendas · 9:16', source: '/videos/ctv_copy1_bolo.mp4', poster: '/videos/ctv_copy1_bolo.jpg' },
+  { title: 'Criativo UGC', meta: 'vídeo de vendas · 9:16', source: '/videos/c_ctv9_UGC3.mp4', poster: '/videos/c_ctv9_UGC3.jpg' },
+  { title: 'Variação para anúncio', meta: 'reels · performance', source: '/videos/A1_Model.mp4', poster: '/videos/A1_Model.jpg' },
+  { title: 'Hook de campanha', meta: 'hook · WhatsApp X1', source: '/videos/e_a2.mp4', poster: '/videos/e_a2.jpg' },
+  { title: 'Oferta em movimento', meta: 'criativo · conversão', source: '/videos/Copy_1.mp4', poster: '/videos/Copy_1.jpg' },
+  { title: 'Prova e desejo', meta: 'UGC · anúncio', source: '/videos/ctv1_2.mp4', poster: '/videos/ctv1_2.jpg' },
 ];
 
 function VideoCard({ item, index }: { item: typeof videoWorks[number]; index: number }) {
@@ -86,6 +86,28 @@ function VideoCard({ item, index }: { item: typeof videoWorks[number]; index: nu
   const frameRef = useRef<HTMLDivElement>(null);
   const [muted, setMuted] = useState(true);
   const [active, setActive] = useState(false);
+  useEffect(() => {
+    const canHover = window.matchMedia('(hover: hover) and (pointer: fine)').matches;
+    if (canHover || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+
+    const video = videoRef.current;
+    const frame = frameRef.current;
+    if (!video || !frame) return;
+
+    const observer = new IntersectionObserver(([entry]) => {
+      if (entry.isIntersecting) {
+        video.muted = true;
+        setMuted(true);
+        void video.play().then(() => setActive(true)).catch(() => undefined);
+      } else {
+        video.pause();
+        setActive(false);
+      }
+    }, { threshold: 0.6, rootMargin: '120px 0px' });
+
+    observer.observe(frame);
+    return () => observer.disconnect();
+  }, []);
   const handlePointerMove = (event: ReactPointerEvent<HTMLElement>) => {
     if (window.matchMedia('(prefers-reduced-motion: reduce)').matches || !frameRef.current) return;
     const bounds = event.currentTarget.getBoundingClientRect();
@@ -117,7 +139,7 @@ function VideoCard({ item, index }: { item: typeof videoWorks[number]; index: nu
   };
   return <article className={`video-card ${active ? 'is-active' : ''}`} onMouseEnter={play} onMouseLeave={pause} onFocus={play} onBlur={pause} onPointerMove={handlePointerMove} onPointerLeave={resetPointer}>
     <div className="video-frame" ref={frameRef}>
-      <video ref={videoRef} src={item.source} muted={muted} loop playsInline preload="auto" aria-label={item.title} />
+      <video ref={videoRef} src={item.source} poster={item.poster} muted={muted} loop playsInline preload="metadata" aria-label={item.title} />
       <div className="video-shade" />
       <span className="video-number">{String(index + 1).padStart(2, '0')}</span>
       <button className="video-sound" type="button" onClick={toggleSound} aria-label={muted ? 'Ativar som' : 'Mutar vídeo'}>{muted ? '⌁' : ')))'}</button>
