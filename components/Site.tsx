@@ -6,7 +6,7 @@ import { AnimatePresence, motion, useAnimationFrame, useMotionValue, useSpring }
 import gsap from 'gsap';
 import { useEffect, useMemo, useRef, useState, type CSSProperties, type KeyboardEvent, type MouseEvent as ReactMouseEvent, type PointerEvent as ReactPointerEvent, type ReactNode } from 'react';
 import BrandLogo from './BrandLogo';
-import { ArrowDown, ArrowLeft, ArrowRight, ArrowUp, ArrowUpRight, CheckDouble } from './Icon';
+import { ArrowDown, ArrowLeft, ArrowRight, ArrowUp, ArrowUpRight, CheckDouble, VolumeOff, VolumeOn } from './Icon';
 import { getWhatsAppUrl, WHATSAPP_URL } from '../lib/site';
 import type { Dict } from '../dictionaries/pt';
 
@@ -142,7 +142,7 @@ function VideoCard({ item, index }: { item: typeof videoWorks[number]; index: nu
       <video ref={videoRef} src={item.source} poster={item.poster} muted={muted} loop playsInline preload="metadata" aria-label={item.title} />
       <div className="video-shade" />
       <span className="video-number">{String(index + 1).padStart(2, '0')}</span>
-      <button className="video-sound" type="button" onClick={toggleSound} aria-label={muted ? 'Ativar som' : 'Mutar vídeo'}>{muted ? '⌁' : ')))'}</button>
+      <button className="video-sound" type="button" onClick={toggleSound} aria-label={muted ? 'Ativar som' : 'Mutar vídeo'}>{muted ? <VolumeOff /> : <VolumeOn />}</button>
       <div className="video-caption"><strong>{item.title}</strong><small>{item.meta}</small></div>
     </div>
   </article>;
