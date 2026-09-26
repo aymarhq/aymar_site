@@ -7,7 +7,7 @@ import gsap from 'gsap';
 import { useEffect, useMemo, useRef, useState, type CSSProperties, type KeyboardEvent, type MouseEvent as ReactMouseEvent, type PointerEvent as ReactPointerEvent, type ReactNode } from 'react';
 import BrandLogo from './BrandLogo';
 import { ArrowDown, ArrowLeft, ArrowRight, ArrowUp, ArrowUpRight, CheckDouble, VolumeOff, VolumeOn } from './Icon';
-import { getWhatsAppUrl, WHATSAPP_URL } from '../lib/site';
+import { WHATSAPP_URL } from '../lib/site';
 import type { Dict } from '../dictionaries/pt';
 
 type ProjectColors = { background: string; primary: string; secondary: string; accent: string };
@@ -287,7 +287,7 @@ function SpecialistDemos({ dict }: { dict: Dict }) {
 }
 
 export default function Site({ dict }: { dict: Dict }) {
-  const [loaded, setLoaded] = useState(false); const reduced = typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches; const whatsappUrl = getWhatsAppUrl(dict.whatsapp);
+  const [loaded, setLoaded] = useState(false); const reduced = typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches; const whatsappUrl = WHATSAPP_URL;
   useEffect(() => { const timer = window.setTimeout(() => setLoaded(true), reduced ? 0 : 520); return () => window.clearTimeout(timer); }, [reduced]);
   useEffect(() => { document.querySelector<HTMLAnchorElement>('.scroll-arrow')?.setAttribute('href', '#videos'); }, []);
   useEffect(() => {
