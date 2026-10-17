@@ -3,6 +3,7 @@
 import { useState, type FormEvent } from 'react';
 import { useRouter } from 'next/navigation';
 import BrandLogo from '../../components/BrandLogo';
+import { ArrowRight } from '../../components/Icon';
 import styles from './formats.module.css';
 
 export default function FormatsLogin({ configured }: { configured: boolean }) {
@@ -30,7 +31,7 @@ export default function FormatsLogin({ configured }: { configured: boolean }) {
           <label>E-mail<input name="email" type="email" autoComplete="email" required /></label>
           <label>Username<input name="username" type="text" autoComplete="nickname" pattern="[A-Za-z0-9_.-]{3,24}" title="De 3 a 24 caracteres, sem espaços" placeholder="ex.: pablo.carmo" required /></label>
           <label>Senha de acesso<input name="password" type="password" autoComplete="current-password" required /></label>
-          <button type="submit" disabled={busy}>{busy ? 'Entrando…' : 'Acessar biblioteca →'}</button>
+          <button type="submit" disabled={busy}>{busy ? 'Entrando…' : <>Acessar biblioteca <ArrowRight /></>}</button>
           {error && <p role="alert" className={styles.error}>{error}</p>}
         </form> : <p>O acesso está sendo preparado.</p>}
         <small>Use o mesmo acesso do portfólio de CTVs.</small>

@@ -3,6 +3,7 @@
 import { useRouter } from 'next/navigation';
 import { useState, type FormEvent } from 'react';
 import BrandLogo from '../../components/BrandLogo';
+import { ArrowRight } from '../../components/Icon';
 import styles from './portfolio.module.css';
 import extras from './portfolio-extras.module.css';
 
@@ -28,7 +29,7 @@ export default function PortfolioLogin({ configured }: { configured: boolean }) 
   return <main className={`${styles.page} ${extras.loginPage}`}>
     <header className={styles.header}><BrandLogo size="sm" className={styles.logo} href="/" label="Aymar Labs, página inicial" /><span className={styles.headerLabel}>Área de criativos</span></header>
     <section className={extras.loginLayout}><div><span className={styles.eyebrow}><span className={styles.blueDot} /> ACESSO RESERVADO / AYMAR LABS</span><h1>O trabalho por trás <em>do resultado.</em></h1><p>Nosso portfólio de criativos, organizado por oferta. Entre para explorar os vídeos.</p></div>
-      <div className={extras.loginCard}><span className={styles.sectionLabel}>PORTFÓLIO DE CTVS</span><h2>Entre para continuar.</h2>{configured ? <form onSubmit={submit} className={styles.form}><label>E-mail<input type="email" autoComplete="email" value={email} onChange={(event) => setEmail(event.target.value)} required /></label><label>Username<input type="text" autoComplete="nickname" placeholder="ex.: pablo.carmo" pattern="[A-Za-z0-9_.-]{3,24}" title="De 3 a 24 caracteres, sem espaços" value={username} onChange={(event) => setUsername(event.target.value)} required /></label><label>Senha de acesso<input type="password" autoComplete="current-password" value={password} onChange={(event) => setPassword(event.target.value)} required /></label><button type="submit" disabled={busy}>{busy ? 'Entrando...' : 'Entrar no portfólio →'}</button>{error && <p className={styles.notice} role="alert">{error}</p>}</form> : <p className={styles.adminText}>Esta área está sendo preparada. O acesso será liberado em breve.</p>}</div>
+      <div className={extras.loginCard}><span className={styles.sectionLabel}>PORTFÓLIO DE CTVS</span><h2>Entre para continuar.</h2>{configured ? <form onSubmit={submit} className={styles.form}><label>E-mail<input type="email" autoComplete="email" value={email} onChange={(event) => setEmail(event.target.value)} required /></label><label>Username<input type="text" autoComplete="nickname" placeholder="ex.: pablo.carmo" pattern="[A-Za-z0-9_.-]{3,24}" title="De 3 a 24 caracteres, sem espaços" value={username} onChange={(event) => setUsername(event.target.value)} required /></label><label>Senha de acesso<input type="password" autoComplete="current-password" value={password} onChange={(event) => setPassword(event.target.value)} required /></label><button type="submit" disabled={busy}>{busy ? 'Entrando...' : <>Entrar no portfólio <ArrowRight /></>}</button>{error && <p className={styles.notice} role="alert">{error}</p>}</form> : <p className={styles.adminText}>Esta área está sendo preparada. O acesso será liberado em breve.</p>}</div>
     </section>
   </main>;
 }

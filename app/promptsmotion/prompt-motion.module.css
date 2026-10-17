@@ -28,3 +28,13 @@
 .promptStatus{padding:22px 0;color:#aaa;font-size:13px;line-height:1.6}
 .promptStatus button{margin-left:8px;border:0;border-bottom:1px solid #555;background:none;color:#f5f4ef;font:inherit;cursor:pointer}
 @media(max-width:760px){.dialog{width:calc(100vw - 20px)}.dialogHead{padding:12px 14px 9px}.fullPlayer{padding:0 12px}.fullPlayer video{max-height:47dvh}.promptPanel{padding:16px 16px 20px}.promptContent pre,.promptContent p{font-size:13px}}
+
+.back,.footer>a,.promptButton,.empty button,.previewCaption{display:flex;align-items:center}
+.search>.ui-icon{width:17px;height:17px;margin:0;flex:none}
+.search button{display:grid;place-items:center;width:28px;height:28px;padding:0;font-size:0}
+.search button .ui-icon,.results button .ui-icon{display:block;width:15px;height:15px;margin:0}
+.results button{display:inline-flex;align-items:center;gap:5px}
+.previewCaption>.ui-icon{width:17px;height:17px;margin:0}
+.promptButton .ui-icon,.back .ui-icon,.footer>a .ui-icon,.empty button .ui-icon{width:13px;height:13px;margin:0}
+.closeButton{display:grid;place-items:center;padding:0;font-size:0!important}
+.closeButton .ui-icon{display:block;width:19px;height:19px;margin:0}

@@ -6,3 +6,9 @@
 .pageNotice{margin:0 0 22px;color:#b6d8ff;font-size:13px;line-height:1.4}
 .bulkActions{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:-10px 0 24px}.bulkActions button{border:1px solid #444;background:#111;color:#f5f4ef;padding:10px 13px;font-size:11px!important;cursor:pointer}.bulkActions button:hover:not(:disabled){border-color:#0a84ff;color:#70b7ff}.bulkActions button:disabled{opacity:.45;cursor:not-allowed}.bulkActions>span{margin-right:auto;color:#999;font:10px 'JetBrains Mono',monospace;text-transform:uppercase;letter-spacing:.06em}.card{position:relative}.cardSelect{position:absolute;z-index:2;top:9px;right:9px;display:flex!important;align-items:center;gap:6px;padding:7px 9px;background:rgba(0,0,0,.76);color:#fff!important;font-size:10px!important;line-height:1!important;cursor:pointer}.cardSelect input{width:15px;height:15px;margin:0;accent-color:#0a84ff}.cardSelect span{font-size:10px}
 @media(max-width:760px){.bulkActions{margin:0 0 20px;gap:7px}.bulkActions button{padding:9px 10px;font-size:10px!important}.bulkActions>span{width:100%;margin:0 0 3px}.cardSelect{top:7px;right:7px;padding:6px 7px}}
+
+.tools>a,.footer a,.externalLink{display:inline-flex;align-items:center;gap:.45em}
+.play{padding:0}
+.play .ui-icon{display:block;width:20px;height:20px;margin:0}
+.dialogHead button{display:grid;place-items:center;width:36px;height:36px;padding:0;font-size:0!important}
+.dialogHead button .ui-icon{display:block;width:20px;height:20px;margin:0}

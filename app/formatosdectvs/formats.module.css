@@ -3,3 +3,15 @@
 @media(max-width:760px){.header{height:68px;padding:0 5vw;gap:12px}.headerLabel{display:none}.logo{width:100px}.headerNav{gap:16px;font-size:8px}.hero{padding:65px 5vw 24px}.heroGrid{display:block;margin:42px 0 45px}.hero h1{font-size:clamp(54px,13vw,88px);line-height:.98}.heroGrid>p{margin-top:28px;font-size:14px;max-width:380px}.eyebrow{font-size:8px}.heroMeta{font-size:8px;gap:10px;flex-wrap:wrap}.heroMeta i{margin:0 5px 2px}.library{padding:48px 5vw 70px}.toolbar{align-items:flex-start;flex-direction:column;gap:25px}.toolbar h2,.bonuses>h2{font-size:clamp(38px,10vw,58px)}.search{width:100%}.resultCount{margin:24px 0 18px;font-size:8px}.grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.card{padding:15px 13px 13px}.card h3{font-size:21px;min-height:44px;margin:22px 0}.cardBottom{flex-direction:column;align-items:flex-start;gap:7px;font-size:7px}.cardTop{font-size:9px}.cardArrow{width:24px;height:24px;font-size:16px}.bonuses{padding:0 5vw 75px}.bonusGrid{gap:12px}.bonusCard{padding:15px}.bonusImage{height:110px;margin:20px 0}.bonusCard h3{font-size:19px;min-height:42px;margin-bottom:16px}.bonusLink{font-size:7px}.footer{padding:25px 5vw;flex-direction:column;font-size:8px}.footer small{font-size:7px}.footerLinks{gap:18px;flex-wrap:wrap}.dialog{width:calc(100vw - 20px);max-height:calc(100dvh - 20px)}.dialogHead{padding:20px 17px 16px;gap:15px}.dialogHead h2{font-size:28px}.description{padding:0 17px 22px;font-size:13px}.examples{padding:0 17px 20px}.media{height:52dvh;min-height:280px}.exampleButtons{justify-content:flex-start;padding-bottom:3px}.exampleButtons button{padding:9px 11px;font-size:8px}.exampleLinks{font-size:7px;gap:14px}.play{width:58px;height:58px}.watchLabel{font-size:8px}.loginLayout{display:block;padding:65px 5vw 75px;min-height:calc(100svh - 68px)}.loginLayout h1{font-size:clamp(54px,13vw,82px);margin:40px 0 28px}.loginLayout>div>p{font-size:14px}.loginCard{margin-top:50px;padding:23px}}
 @media(max-width:360px){.headerNav{gap:11px;font-size:7px}.hero h1{font-size:13vw}.card h3{font-size:19px}.bonusCard h3{font-size:18px}}
 @media(prefers-reduced-motion:reduce){.card,.bonusCard,.play{transition:none}.card:hover{transform:none}}
+
+.headerNav a,.footerLinks a,.exampleLinks a,.bonusLink,.empty button,.form button{display:inline-flex;align-items:center;gap:.45em}
+.search>.ui-icon{width:18px;height:18px;margin:0;flex:none}
+.search button{display:grid;place-items:center;width:28px;height:28px;padding:0;font-size:0}
+.search button .ui-icon{width:16px;height:16px;margin:0}
+.cardArrow .ui-icon{display:block;width:13px;height:13px;margin:0}
+.bonusTop>span:last-child .ui-icon{display:block;width:15px;height:15px;margin:0}
+.close{display:grid;place-items:center;width:38px;height:38px;font-size:0}
+.close .ui-icon{display:block;width:20px;height:20px;margin:0}
+.play{padding:0}
+.play .ui-icon{display:block;width:22px;height:22px;margin:0}
+.form button .ui-icon{width:16px;height:16px;margin:0}

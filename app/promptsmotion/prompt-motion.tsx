@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 import BrandLogo from '../../components/BrandLogo';
+import { ArrowUpRight, Close, Search } from '../../components/Icon';
 import { motionCategories, type MotionEntry } from '../../lib/prompt-motion-shared';
 import styles from './prompt-motion.module.css';
 
@@ -181,7 +182,7 @@ export default function PromptMotion({ entries }: { entries: MotionEntry[] }) {
     <header className={styles.header}>
       <BrandLogo size="sm" className={styles.logo} href="/" label="Aymar Labs, página inicial" />
       <span className={styles.headerLabel}>Biblioteca de motion</span>
-      <Link className={styles.back} href="/portfoliodectvs">Portfólio de CTVs ↗</Link>
+      <Link className={styles.back} href="/portfoliodectvs">Portfólio de CTVs <ArrowUpRight /></Link>
     </header>
 
     <section className={styles.hero}>
@@ -198,7 +199,7 @@ export default function PromptMotion({ entries }: { entries: MotionEntry[] }) {
         <div className={styles.tabs} role="group" aria-label="Tipo de conteúdo">
           {[['all', 'Tudo', entries.length], ['prompt', 'Prompt', counts.prompt], ['skill', 'Skill', counts.skill]].map(([id, label, count]) => <button key={id} aria-pressed={kind === id} onClick={() => setKind(String(id))}>{label}<span>{count}</span></button>)}
         </div>
-        <label className={styles.search}><span aria-hidden="true">⌕</span><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Buscar animação ou categoria" aria-label="Buscar animação ou categoria" />{query && <button onClick={() => setQuery('')} aria-label="Limpar busca">×</button>}</label>
+        <label className={styles.search}><Search /><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Buscar animação ou categoria" aria-label="Buscar animação ou categoria" />{query && <button onClick={() => setQuery('')} aria-label="Limpar busca"><Close /></button>}</label>
         <label className={styles.sortLabel}><span>Ordenar</span><select value={sort} onChange={(event) => setSort(event.target.value)}><option value="popular">Popular</option><option value="newest">Mais recentes</option><option value="oldest">Mais antigas</option><option value="title">A–Z</option></select></label>
         <label className={styles.pause}><input type="checkbox" checked={paused} onChange={(event) => setPaused(event.target.checked)} /> Pausar prévias</label>
       </div>
@@ -208,26 +209,26 @@ export default function PromptMotion({ entries }: { entries: MotionEntry[] }) {
         {motionCategories.map(([id, label]) => <button key={id} aria-pressed={categories.includes(id)} onClick={() => toggleCategory(id)}>{label}<span>{matching.filter((entry) => entry.contentTags.includes(id)).length}</span></button>)}
       </div></div>
 
-      <div className={styles.results}><span aria-live="polite">{filtered.length} de {entries.length} animações</span>{(query || categories.length > 0 || kind !== 'all') ? <button onClick={() => { setQuery(''); setCategories([]); setKind('all'); }}>Limpar filtros ×</button> : <span>PREVIEWS E PROMPTS</span>}</div>
+      <div className={styles.results}><span aria-live="polite">{filtered.length} de {entries.length} animações</span>{(query || categories.length > 0 || kind !== 'all') ? <button onClick={() => { setQuery(''); setCategories([]); setKind('all'); }}>Limpar filtros <Close /></button> : <span>PREVIEWS E PROMPTS</span>}</div>
       <div ref={grid} className={styles.grid}>{filtered.map((entry) => <article className={styles.card} key={entry.slug} data-motion-slug={entry.slug}>
         <button className={styles.previewButton} style={{ aspectRatio: `${entry.width} / ${entry.height}` }} onClick={() => openEntry(entry)} aria-label={`Assistir: ${entry.title}`}>
           <Preview entry={entry} paused={paused || Boolean(active)} />
-          <span className={styles.previewCaption}>Assistir animação <span aria-hidden="true">↗</span></span>
+          <span className={styles.previewCaption}>Assistir animação <ArrowUpRight /></span>
         </button>
         <div className={styles.cardInfo}>
           <div className={styles.cardTop}><span>{entry.tags.map((tag) => tag === 'skill' ? 'Skill' : 'Prompt').join(' + ')}</span></div>
         <button className={styles.titleButton} onClick={() => openEntry(entry)}><h2>{entry.title}</h2></button>
-        <div className={styles.cardBottom}><div className={styles.tags}>{entry.contentTags.map((tag) => <button key={tag} onClick={() => setCategories([tag])}>{categoryNames[tag] ?? tag}</button>)}</div><button className={styles.promptButton} onClick={() => openEntry(entry)}>{entry.tags.includes('prompt') ? 'Ver prompt' : 'Ver skill'} <span aria-hidden="true">↗</span></button></div>
+        <div className={styles.cardBottom}><div className={styles.tags}>{entry.contentTags.map((tag) => <button key={tag} onClick={() => setCategories([tag])}>{categoryNames[tag] ?? tag}</button>)}</div><button className={styles.promptButton} onClick={() => openEntry(entry)}>{entry.tags.includes('prompt') ? 'Ver prompt' : 'Ver skill'} <ArrowUpRight /></button></div>
         </div>
       </article>)}</div>
-      {!filtered.length && <div className={styles.empty}><h2>Nenhuma animação com esses filtros.</h2><p>Tente outro nome, criador ou combinação de categorias.</p><button onClick={() => { setCategories([]); setQuery(''); setKind('all'); }}>Ver todas as animações ↗</button></div>}
+      {!filtered.length && <div className={styles.empty}><h2>Nenhuma animação com esses filtros.</h2><p>Tente outro nome, criador ou combinação de categorias.</p><button onClick={() => { setCategories([]); setQuery(''); setKind('all'); }}>Ver todas as animações <ArrowUpRight /></button></div>}
     </section>
 
-    <footer className={styles.footer}><p>Biblioteca de motion <span>·</span> Aymar Labs<br /><small>Previews e prompts para copiar e usar.</small></p><Link href="/">Voltar ao site ↗</Link></footer>
+    <footer className={styles.footer}><p>Biblioteca de motion <span>·</span> Aymar Labs<br /><small>Previews e prompts para copiar e usar.</small></p><Link href="/">Voltar ao site <ArrowUpRight /></Link></footer>
 
     <dialog ref={dialog} className={styles.dialog} aria-label={`Preview e prompt${active ? `: ${active.title}` : ''}`} onClose={() => { fullVideo.current?.pause(); setActive(null); }} onClick={(event) => { if (event.target === event.currentTarget) dialog.current?.close(); }}>
       {active && <div className={styles.dialogInner}>
-        <div className={styles.dialogHead}><button className={styles.closeButton} onClick={() => dialog.current?.close()} aria-label="Fechar animação">×</button></div>
+        <div className={styles.dialogHead}><button className={styles.closeButton} onClick={() => dialog.current?.close()} aria-label="Fechar animação"><Close /></button></div>
         <div className={styles.fullPlayer}><video ref={fullVideo} src={active.video} poster={active.poster} controls autoPlay playsInline preload="metadata" width={active.width} height={active.height} /></div>
         <section className={styles.promptPanel} aria-label="Prompt para copiar">
           <div className={styles.promptToolbar}><span>{active.tags.includes('skill') ? (active.tags.includes('prompt') ? 'PROMPT + SKILL' : 'SKILL') : 'PROMPT'}</span><button onClick={copyPrompt} disabled={promptLoading || !promptDetails}>{copied ? 'COPIADO ✓' : 'COPIAR'}</button></div>
