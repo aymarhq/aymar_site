@@ -1163,9 +1163,9 @@
   "bonuses": [
     {
       "number": "01",
-      "title": "Templates no Canva",
-      "image": "/formats/bonus/canva.png",
-      "url": "https://www.canva.com/design/DAHAk6P1bF0/9avSd90Lh6HXrIBWYqEChQ/edit"
+      "title": "Portfólio de CTVs",
+      "image": "/formats/bonus/portfolio.png",
+      "url": "/portfoliodectvs"
     },
     {
       "number": "02",
@@ -1175,6 +1175,12 @@
     },
     {
       "number": "03",
+      "title": "Site principal Aymar Labs",
+      "image": "/formats/bonus/site.png",
+      "url": "/"
+    },
+    {
+      "number": "04",
       "title": "Grupo de Alunos",
       "image": "/formats/bonus/grupo.png",
       "url": null
