@@ -13,7 +13,7 @@ O build de produção pode ser validado com `npm run build`.
 
 ## Portfólio de criativos
 
-A rota `/portfoliodectvs` reúne 87 vídeos de sete ofertas já existentes no Google Drive. O catálogo do Drive está em `lib/portfolio.ts`; novos vídeos enviados pelo administrador são armazenados no Vercel Blob, separados por oferta, e aparecem automaticamente na página. Vídeos adicionados diretamente às pastas do Drive não entram no catálogo automaticamente.
+A rota `/portfoliodectvs` reúne vídeos de sete ofertas já existentes no Google Drive. O catálogo do Drive está em `lib/portfolio.ts`; novos vídeos enviados pelo administrador são armazenados no Vercel Blob, separados por oferta, e aparecem automaticamente na página. O administrador pode remover arquivos enviados do armazenamento ou retirar vídeos do Drive do catálogo. Ao retirar um vídeo do Drive, o arquivo original continua na pasta. Vídeos adicionados diretamente às pastas do Drive não entram no catálogo automaticamente.
 
 Configure no projeto Vercel, em **Production** e **Preview**:
 

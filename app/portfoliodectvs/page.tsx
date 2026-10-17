@@ -29,9 +29,26 @@ async function getStoredVideos(): Promise<StoredVideo[]> {
   return videos;
 }
 
+async function getHiddenDriveVideos(): Promise<string[]> {
+  if (!process.env.BLOB_READ_WRITE_TOKEN) return [];
+  try {
+    const page = await list({ prefix: 'portfolio-admin/hidden-drive-videos.json', limit: 1 });
+    const manifest = page.blobs.find(({ pathname }) => pathname === 'portfolio-admin/hidden-drive-videos.json');
+    if (!manifest) return [];
+    const response = await fetch(manifest.url, { cache: 'no-store' });
+    if (!response.ok) return [];
+    const data: unknown = await response.json();
+    return Array.isArray(data) ? data.filter((id): id is string => typeof id === 'string') : [];
+  } catch (error) {
+    console.error('Não foi possível carregar vídeos removidos do portfólio:', error);
+    return [];
+  }
+}
+
 export default async function PortfolioPage() {
   const role = await portfolioRole();
   if (!role) return <PortfolioLogin configured={Boolean(process.env.PORTFOLIO_ADMIN_PASSWORD || process.env.PORTFOLIO_STUDENT_PASSWORD)} />;
-  const uploads = await getStoredVideos();
-  return <PortfolioClient offers={portfolioOffers} uploads={uploads} uploadConfigured={uploadIsConfigured()} initialAdmin={role === 'admin'} />;
+  const [uploads, hiddenDriveVideos] = await Promise.all([getStoredVideos(), getHiddenDriveVideos()]);
+  const offers = portfolioOffers.map((offer) => ({ ...offer, videos: offer.videos.filter(({ id }) => !hiddenDriveVideos.includes(id)) }));
+  return <PortfolioClient offers={offers} uploads={uploads} uploadConfigured={uploadIsConfigured()} initialAdmin={role === 'admin'} />;
 }

@@ -87,6 +87,29 @@ export default function PortfolioClient({ offers, uploads, uploadConfigured, ini
     finally { setBusy(false); }
   }
 
+  async function removeVideo(card: Card) {
+    const isDriveVideo = card.source === 'Drive';
+    const prompt = isDriveVideo
+      ? `Remover “${readableName(card.name)}” do portfólio? O arquivo original continuará na pasta do Drive.`
+      : `Excluir “${readableName(card.name)}” do armazenamento do portfólio? Essa ação não pode ser desfeita.`;
+    if (!window.confirm(prompt)) return;
+    setBusy(true); setNotice('');
+    try {
+      const response = await fetch('/api/portfolio/delete', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(isDriveVideo ? { source: 'drive', id: card.key.slice('drive-'.length) } : { source: 'upload', pathname: card.key.slice('blob-'.length) }),
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || 'Não foi possível remover o vídeo.');
+      setNotice(isDriveVideo ? 'Vídeo removido do portfólio.' : 'Vídeo excluído do armazenamento.');
+      if (active?.key === card.key) setActive(null);
+      router.refresh();
+    } catch (error) {
+      setNotice(error instanceof Error ? error.message : 'Não foi possível remover o vídeo.');
+    } finally { setBusy(false); }
+  }
+
   return <main className={styles.page}>
     <header className={styles.header}>
       <Link className={styles.brand} href="/" aria-label="Aymar Labs, página inicial">aymar<span>.</span></Link>
@@ -114,10 +137,14 @@ export default function PortfolioClient({ offers, uploads, uploadConfigured, ini
         <div><span className={styles.sectionLabel}>OFERTA / {current.market}</span><h2>{current.name}<span>.</span></h2></div>
         <div className={styles.tools}><input aria-label="Buscar vídeo nesta oferta" placeholder="Buscar vídeo..." value={query} onChange={(event) => setQuery(event.target.value)} />{authenticated && <a href={`https://drive.google.com/drive/folders/${current.folderId}`} target="_blank" rel="noopener noreferrer">Abrir pasta no Drive ↗</a>}</div>
       </div>
-      <div className={styles.grid}>{cards.map((card, index) => <button className={styles.card} key={card.key} onClick={() => setActive(card)} aria-label={`Assistir ${readableName(card.name)}`}>
-        <span className={styles.frame} style={card.thumbnail ? { backgroundImage: `linear-gradient(180deg, transparent 45%, rgba(0,0,0,.8)), url("${card.thumbnail}")` } : undefined}><span className={styles.play}>▶</span><span className={styles.cardNumber}>{String(index + 1).padStart(2, '0')}</span></span>
-        <span className={styles.cardInfo}><strong>{readableName(card.name)}</strong><small>{card.source}</small></span>
-      </button>)}</div>
+      {notice && !adminOpen && <p className={styles.pageNotice} role="status">{notice}</p>}
+      <div className={styles.grid}>{cards.map((card, index) => <article className={styles.card} key={card.key}>
+        <button className={styles.cardPreview} onClick={() => setActive(card)} aria-label={`Assistir ${readableName(card.name)}`}>
+          <span className={styles.frame} style={card.thumbnail ? { backgroundImage: `linear-gradient(180deg, transparent 45%, rgba(0,0,0,.8)), url("${card.thumbnail}")` } : undefined}><span className={styles.play}>▶</span><span className={styles.cardNumber}>{String(index + 1).padStart(2, '0')}</span></span>
+        </button>
+        <div className={styles.cardInfo}><strong>{readableName(card.name)}</strong><small>{card.source}</small></div>
+        {authenticated && <button className={extras.removeVideo} onClick={() => removeVideo(card)} disabled={busy}>Remover</button>}
+      </article>)}</div>
       {cards.length === 0 && <p className={styles.empty}>Nenhum vídeo encontrado nesta oferta.</p>}
     </section>
     <footer className={styles.footer}><span>© {new Date().getFullYear()} Aymar Labs</span><Link href="/">Voltar ao site ↗</Link></footer>
