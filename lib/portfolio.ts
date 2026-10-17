@@ -134,3 +134,15 @@ export const portfolioOffers: PortfolioOffer[] = [
     ]),
   },
 ];
+
+const portfolioOfferSlugs = new Set(portfolioOffers.map(({ slug }) => slug));
+
+export function isPortfolioUploadPathname(pathname: string) {
+  const parts = pathname.split('/');
+  return parts.length === 3
+    && parts[0] === 'portfolio'
+    && portfolioOfferSlugs.has(parts[1])
+    && parts[2].length > 0
+    && parts[2].length <= 255
+    && /\.(?:mp4|mov|webm|m4v)$/i.test(parts[2]);
+}

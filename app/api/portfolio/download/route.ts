@@ -1,7 +1,7 @@
 import { list } from '@vercel/blob';
 import { NextResponse } from 'next/server';
 import { portfolioSession } from '../../../../lib/portfolio-auth';
-import { portfolioOffers } from '../../../../lib/portfolio';
+import { isPortfolioUploadPathname, portfolioOffers } from '../../../../lib/portfolio';
 
 export const runtime = 'nodejs';
 
@@ -30,8 +30,7 @@ export async function GET(request: Request) {
     downloadUrl = `https://drive.google.com/uc?export=download&id=${encodeURIComponent(id)}`;
   } else if (source === 'upload') {
     const pathname = searchParams.get('pathname') ?? '';
-    const match = /^portfolio\/([a-z0-9-]+)\/([a-z0-9._-]+\.(?:mp4|mov|webm|m4v))$/.exec(pathname);
-    if (!match || !portfolioOffers.some(({ slug }) => slug === match[1]) || !process.env.BLOB_READ_WRITE_TOKEN) return NextResponse.json({ error: 'Vídeo armazenado inválido.' }, { status: 400 });
+    if (!isPortfolioUploadPathname(pathname) || !process.env.BLOB_READ_WRITE_TOKEN) return NextResponse.json({ error: 'Vídeo armazenado inválido.' }, { status: 400 });
     const page = await list({ prefix: pathname, limit: 2 });
     const blob = page.blobs.find(({ pathname: candidate }) => candidate === pathname);
     if (!blob) return NextResponse.json({ error: 'Esse vídeo não está mais no armazenamento.' }, { status: 404 });

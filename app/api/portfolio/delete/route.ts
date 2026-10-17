@@ -1,11 +1,10 @@
 import { del, list, put } from '@vercel/blob';
 import { NextResponse } from 'next/server';
 import { isPortfolioAdmin } from '../../../../lib/portfolio-auth';
-import { portfolioOffers } from '../../../../lib/portfolio';
+import { isPortfolioUploadPathname, portfolioOffers } from '../../../../lib/portfolio';
 
 export const runtime = 'nodejs';
 
-const validSlugs = new Set(portfolioOffers.map(({ slug }) => slug));
 const manifestPath = 'portfolio-admin/hidden-drive-videos.json';
 
 async function readHiddenDriveVideos() {
@@ -40,14 +39,13 @@ export async function DELETE(request: Request) {
       if (!pathnames.length || pathnames.length !== body.pathnames.length || pathnames.length > 300) return NextResponse.json({ error: 'Seleção de vídeos inválida.' }, { status: 400 });
       const blobs = [];
       for (const pathname of pathnames) {
-        const match = /^portfolio\/([a-z0-9-]+)\/([a-z0-9._-]+\.(?:mp4|mov|webm|m4v))$/.exec(pathname);
-        if (!match || !validSlugs.has(match[1])) return NextResponse.json({ error: 'Vídeo inválido.' }, { status: 400 });
+        if (!isPortfolioUploadPathname(pathname)) return NextResponse.json({ error: 'Vídeo inválido.' }, { status: 400 });
         const page = await list({ prefix: pathname, limit: 2 });
         const blob = page.blobs.find(({ pathname: candidate }) => candidate === pathname);
         if (!blob) return NextResponse.json({ error: 'Um ou mais vídeos não estão mais no armazenamento.' }, { status: 404 });
         blobs.push(blob);
       }
-      await del(blobs.map(({ url }) => url));
+      await del(pathnames);
       return NextResponse.json({ deleted: blobs.length, source: 'upload' });
     }
 
@@ -70,12 +68,11 @@ export async function DELETE(request: Request) {
     }
 
     if (body.source === 'upload' && typeof body.pathname === 'string') {
-      const match = /^portfolio\/([a-z0-9-]+)\/([a-z0-9._-]+\.(?:mp4|mov|webm|m4v))$/.exec(body.pathname);
-      if (!match || !validSlugs.has(match[1])) return NextResponse.json({ error: 'Vídeo inválido.' }, { status: 400 });
+      if (!isPortfolioUploadPathname(body.pathname)) return NextResponse.json({ error: 'Vídeo inválido.' }, { status: 400 });
       const page = await list({ prefix: body.pathname, limit: 2 });
       const blob = page.blobs.find(({ pathname }) => pathname === body.pathname);
       if (!blob) return NextResponse.json({ error: 'Esse vídeo não está mais no armazenamento.' }, { status: 404 });
-      await del(blob.url);
+      await del(body.pathname);
       return NextResponse.json({ deleted: true, source: 'upload' });
     }
 
