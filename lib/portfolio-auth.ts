@@ -9,7 +9,8 @@ function secret(role: 'admin' | 'viewer') {
 }
 
 function signature(role: string, expires: string, password: string) {
-  return createHmac('sha256', password).update(`portfolio:${role}:${expires}`).digest('hex');
+  const adminEmail = role === 'admin' ? process.env.PORTFOLIO_ADMIN_EMAIL?.trim().toLocaleLowerCase('en-US') ?? '' : '';
+  return createHmac('sha256', password).update(`portfolio:${role}:${expires}:${adminEmail}`).digest('hex');
 }
 
 function equal(a: string, b: string) {
@@ -19,11 +20,13 @@ function equal(a: string, b: string) {
 }
 
 export function uploadIsConfigured() {
-  return Boolean(secret('admin') && process.env.BLOB_READ_WRITE_TOKEN);
+  return Boolean(secret('admin') && process.env.PORTFOLIO_ADMIN_EMAIL && process.env.BLOB_READ_WRITE_TOKEN);
 }
 
-export function checkPassword(value: string): 'admin' | 'viewer' | null {
-  if (secret('admin') && equal(value, secret('admin')!)) return 'admin';
+export function checkPassword(email: string, value: string): 'admin' | 'viewer' | null {
+  const normalizedEmail = email.trim().toLocaleLowerCase('en-US');
+  const adminEmail = process.env.PORTFOLIO_ADMIN_EMAIL?.trim().toLocaleLowerCase('en-US');
+  if (adminEmail && normalizedEmail === adminEmail && secret('admin') && equal(value, secret('admin')!)) return 'admin';
   if (secret('viewer') && equal(value, secret('viewer')!)) return 'viewer';
   return null;
 }

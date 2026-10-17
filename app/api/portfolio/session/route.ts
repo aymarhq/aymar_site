@@ -12,8 +12,10 @@ export async function POST(request: Request) {
   if (!process.env.PORTFOLIO_ADMIN_PASSWORD && !process.env.PORTFOLIO_STUDENT_PASSWORD) return NextResponse.json({ error: 'O acesso ainda não foi configurado.' }, { status: 503 });
   const origin = request.headers.get('origin');
   if (origin && new URL(origin).host !== request.headers.get('host')) return NextResponse.json({ error: 'Origem inválida.' }, { status: 403 });
-  const body = await request.json().catch(() => null) as { password?: unknown } | null;
-  const role = typeof body?.password === 'string' ? checkPassword(body.password) : null;
+  const body = await request.json().catch(() => null) as { email?: unknown; password?: unknown } | null;
+  const email = typeof body?.email === 'string' ? body.email.trim() : '';
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return NextResponse.json({ error: 'Informe um e-mail válido.' }, { status: 400 });
+  const role = typeof body?.password === 'string' ? checkPassword(email, body.password) : null;
   if (!role) {
     return NextResponse.json({ error: 'Senha incorreta.' }, { status: 401 });
   }
