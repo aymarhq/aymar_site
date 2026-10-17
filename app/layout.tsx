@@ -3,7 +3,7 @@ import type { Metadata } from 'next';
 import './globals.css';
 import { SITE_URL } from '../lib/site';
 
-export const metadata: Metadata = { metadataBase: new URL(SITE_URL), icons: { icon: '/favicon.jpg', apple: '/favicon.jpg' } };
+export const metadata: Metadata = { metadataBase: new URL(SITE_URL), icons: { icon: '/brand/aymar-favicon.svg', apple: '/favicon.jpg' } };
 
 export const viewport = { width: 'device-width', initialScale: 1, viewportFit: 'cover', themeColor: [{ media: '(prefers-color-scheme: dark)', color: '#0a0a0a' }, { media: '(prefers-color-scheme: light)', color: '#f5f4ef' }] };
 

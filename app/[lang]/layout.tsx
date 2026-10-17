@@ -17,7 +17,7 @@ export async function generateMetadata({ params }: { params: Promise<{ lang: str
     robots: { index: true, follow: true, googleBot: { index: true, follow: true, 'max-image-preview': 'large' } },
     openGraph: { type: 'website', locale: dict.locale, url: `${SITE_URL}${path}`, siteName: 'Aymar Labs', title: dict.metadata.title, description: dict.metadata.description, images: [{ url: `${SITE_URL}/opengraph-image`, width: 1200, height: 630, alt: 'Aymar Labs — creative commerce' }] },
     twitter: { card: 'summary_large_image', title: dict.metadata.title, description: dict.metadata.description, images: [{ url: `${SITE_URL}/opengraph-image`, alt: 'Aymar Labs — creative commerce' }] },
-    manifest: '/manifest.webmanifest', icons: { icon: '/favicon.jpg', apple: '/favicon.jpg' }
+    manifest: '/manifest.webmanifest', icons: { icon: '/brand/aymar-favicon.svg', apple: '/favicon.jpg' }
   };
 }
 
