@@ -8,9 +8,9 @@
   "theme_color": "#0a0a0a",
   "lang": "pt-BR",
   "icons": [{
-    "src": "/brand/aymar-favicon.svg",
-    "sizes": "any",
-    "type": "image/svg+xml",
+    "src": "/brand/aymar-favicon.png",
+    "sizes": "512x512",
+    "type": "image/png",
     "purpose": "any"
   }]
 }
