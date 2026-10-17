@@ -3,10 +3,9 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 import BrandLogo from '../../components/BrandLogo';
-import { MOTION_SOURCE, motionCategories, type MotionEntry } from '../../lib/prompt-motion-shared';
+import { motionCategories, type MotionEntry } from '../../lib/prompt-motion-shared';
 import styles from './prompt-motion.module.css';
 
-type LibraryView = 'gallery' | 'templates' | 'customize';
 const categoryNames: Record<string, string> = Object.fromEntries(motionCategories);
 
 type PromptDetails = { prompt?: string; skillDescription?: string; skillCommand?: string };
@@ -14,15 +13,6 @@ type PromptDetails = { prompt?: string; skillDescription?: string; skillCommand?
 function markupText(markup: string | null | undefined) {
   if (!markup) return '';
   return new DOMParser().parseFromString(markup, 'text/html').body.textContent?.trim() ?? '';
-}
-
-function SourceReader({ path, label }: { path: string; label: string }) {
-  const [loading, setLoading] = useState(true);
-  return <div className={styles.sourceReader}>
-    {loading && <div className={styles.readerLoading} role="status">Carregando conteúdo original…</div>}
-    <iframe key={path} src={`${MOTION_SOURCE}${path}`} title={label} allow="clipboard-write; fullscreen" allowFullScreen
-      referrerPolicy="strict-origin-when-cross-origin" onLoad={() => setLoading(false)} />
-  </div>;
 }
 
 function Preview({ entry, paused }: { entry: MotionEntry; paused: boolean }) {
@@ -53,7 +43,6 @@ function Preview({ entry, paused }: { entry: MotionEntry; paused: boolean }) {
 }
 
 export default function PromptMotion({ entries }: { entries: MotionEntry[] }) {
-  const [view, setView] = useState<LibraryView>('gallery');
   const [query, setQuery] = useState('');
   const [kind, setKind] = useState('all');
   const [categories, setCategories] = useState<string[]>([]);
@@ -74,7 +63,7 @@ export default function PromptMotion({ entries }: { entries: MotionEntry[] }) {
   const matching = useMemo(() => {
     const term = query.trim().toLocaleLowerCase('pt-BR');
     return entries.filter((entry) => (kind === 'all' || entry.tags.includes(kind))
-      && (!term || `${entry.title} ${entry.handle} ${entry.contentTags.map((tag) => categoryNames[tag]).join(' ')}`.toLocaleLowerCase('pt-BR').includes(term)));
+      && (!term || `${entry.title} ${entry.contentTags.map((tag) => categoryNames[tag]).join(' ')}`.toLocaleLowerCase('pt-BR').includes(term)));
   }, [entries, kind, query]);
   const filtered = useMemo(() => {
     const result = matching.filter((entry) => categories.every((category) => entry.contentTags.includes(category)));
@@ -86,7 +75,7 @@ export default function PromptMotion({ entries }: { entries: MotionEntry[] }) {
 
   useEffect(() => {
     const container = grid.current;
-    if (!container || view !== 'gallery') return;
+    if (!container) return;
     const cards = Array.from(container.children) as HTMLElement[];
     let frame = 0;
     function arrange() {
@@ -119,7 +108,7 @@ export default function PromptMotion({ entries }: { entries: MotionEntry[] }) {
       container.style.height = '';
       cards.forEach((card) => { card.style.width = ''; card.style.transform = ''; });
     };
-  }, [filtered, view]);
+  }, [filtered]);
 
   useEffect(() => {
     if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) setPaused(true);
@@ -196,24 +185,20 @@ export default function PromptMotion({ entries }: { entries: MotionEntry[] }) {
     </header>
 
     <section className={styles.hero}>
-      <div className={styles.eyebrow}><i /> AYMAR LABS / PROMPTS MOTION</div>
+      <div className={styles.eyebrow}><i /> AYMAR LABS / BIBLIOTECA DE MOTION</div>
       <div className={styles.heroGrid}>
         <h1>Veja o motion.<br /><em>Copie o prompt.</em></h1>
-        <p>As animações originais do Prompt Motion, com os prompts e as skills de cada criador. Encontre uma referência e abra o que foi usado para criar.</p>
+        <p>Explore cada animação, veja o preview e copie o prompt completo para usar na sua próxima criação.</p>
       </div>
-      <div className={styles.heroMeta}><span>{entries.length} ANIMAÇÕES <i /> {counts.prompt} PROMPTS <i /> {counts.skill} SKILLS</span><a href={MOTION_SOURCE} target="_blank" rel="noreferrer">ACERVO ORIGINAL · PROMPT MOTION ↗</a></div>
+      <div className={styles.heroMeta}><span>{entries.length} ANIMAÇÕES <i /> {counts.prompt} PROMPTS <i /> {counts.skill} SKILLS</span><span>PREVIEWS E PROMPTS COPIÁVEIS</span></div>
     </section>
 
-    <nav className={styles.libraryNav} aria-label="Biblioteca de motion">
-      {([{ id: 'gallery', label: 'Animações', count: entries.length }, { id: 'templates', label: 'Templates' }, { id: 'customize', label: 'Personalizar prompt' }] as const).map((tab) => <button key={tab.id} aria-current={view === tab.id ? 'page' : undefined} onClick={() => setView(tab.id)}>{tab.label}{'count' in tab && <span>{tab.count}</span>}</button>)}
-    </nav>
-
-    {view === 'gallery' ? <section className={styles.library} aria-label="Catálogo de animações originais">
+    <section className={styles.library} aria-label="Catálogo de animações">
       <div className={styles.toolbar}>
         <div className={styles.tabs} role="group" aria-label="Tipo de conteúdo">
           {[['all', 'Tudo', entries.length], ['prompt', 'Prompt', counts.prompt], ['skill', 'Skill', counts.skill]].map(([id, label, count]) => <button key={id} aria-pressed={kind === id} onClick={() => setKind(String(id))}>{label}<span>{count}</span></button>)}
         </div>
-        <label className={styles.search}><span aria-hidden="true">⌕</span><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Buscar animação ou criador" aria-label="Buscar animação ou criador" />{query && <button onClick={() => setQuery('')} aria-label="Limpar busca">×</button>}</label>
+        <label className={styles.search}><span aria-hidden="true">⌕</span><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Buscar animação ou categoria" aria-label="Buscar animação ou categoria" />{query && <button onClick={() => setQuery('')} aria-label="Limpar busca">×</button>}</label>
         <label className={styles.sortLabel}><span>Ordenar</span><select value={sort} onChange={(event) => setSort(event.target.value)}><option value="popular">Popular</option><option value="newest">Mais recentes</option><option value="oldest">Mais antigas</option><option value="title">A–Z</option></select></label>
         <label className={styles.pause}><input type="checkbox" checked={paused} onChange={(event) => setPaused(event.target.checked)} /> Pausar prévias</label>
       </div>
@@ -223,22 +208,22 @@ export default function PromptMotion({ entries }: { entries: MotionEntry[] }) {
         {motionCategories.map(([id, label]) => <button key={id} aria-pressed={categories.includes(id)} onClick={() => toggleCategory(id)}>{label}<span>{matching.filter((entry) => entry.contentTags.includes(id)).length}</span></button>)}
       </div></div>
 
-      <div className={styles.results}><span aria-live="polite">{filtered.length} de {entries.length} animações</span>{(query || categories.length > 0 || kind !== 'all') ? <button onClick={() => { setQuery(''); setCategories([]); setKind('all'); }}>Limpar filtros ×</button> : <span>VÍDEOS E PROMPTS DOS CRIADORES ORIGINAIS</span>}</div>
+      <div className={styles.results}><span aria-live="polite">{filtered.length} de {entries.length} animações</span>{(query || categories.length > 0 || kind !== 'all') ? <button onClick={() => { setQuery(''); setCategories([]); setKind('all'); }}>Limpar filtros ×</button> : <span>PREVIEWS E PROMPTS</span>}</div>
       <div ref={grid} className={styles.grid}>{filtered.map((entry) => <article className={styles.card} key={entry.slug} data-motion-slug={entry.slug}>
         <button className={styles.previewButton} style={{ aspectRatio: `${entry.width} / ${entry.height}` }} onClick={() => openEntry(entry)} aria-label={`Assistir: ${entry.title}`}>
           <Preview entry={entry} paused={paused || Boolean(active)} />
           <span className={styles.previewCaption}>Assistir animação <span aria-hidden="true">↗</span></span>
         </button>
         <div className={styles.cardInfo}>
-          <div className={styles.cardTop}><a href={`https://x.com/${entry.handle}`} target="_blank" rel="noreferrer">@{entry.handle}</a><span>{entry.tags.map((tag) => tag === 'skill' ? 'Skill' : 'Prompt').join(' + ')}</span></div>
+          <div className={styles.cardTop}><span>{entry.tags.map((tag) => tag === 'skill' ? 'Skill' : 'Prompt').join(' + ')}</span></div>
         <button className={styles.titleButton} onClick={() => openEntry(entry)}><h2>{entry.title}</h2></button>
         <div className={styles.cardBottom}><div className={styles.tags}>{entry.contentTags.map((tag) => <button key={tag} onClick={() => setCategories([tag])}>{categoryNames[tag] ?? tag}</button>)}</div><button className={styles.promptButton} onClick={() => openEntry(entry)}>{entry.tags.includes('prompt') ? 'Ver prompt' : 'Ver skill'} <span aria-hidden="true">↗</span></button></div>
         </div>
       </article>)}</div>
       {!filtered.length && <div className={styles.empty}><h2>Nenhuma animação com esses filtros.</h2><p>Tente outro nome, criador ou combinação de categorias.</p><button onClick={() => { setCategories([]); setQuery(''); setKind('all'); }}>Ver todas as animações ↗</button></div>}
-    </section> : <section className={styles.embeddedSection} aria-label={view === 'templates' ? 'Templates originais' : 'Personalizar prompt'}><div className={styles.sectionIntro}><div><span>FERRAMENTAS DO PROMPT MOTION</span><h2>{view === 'templates' ? 'Templates originais.' : 'Deixe com a sua cara.'}</h2></div><a href={`${MOTION_SOURCE}/${view === 'templates' ? 'templates' : 'customize'}`} target="_blank" rel="noreferrer">Abrir na fonte ↗</a></div><SourceReader key={view} path={`/${view === 'templates' ? 'templates' : 'customize'}`} label={view === 'templates' ? 'Templates originais do Prompt Motion' : 'Personalizar prompt no Prompt Motion'} /></section>}
+    </section>
 
-    <footer className={styles.footer}><p>Biblioteca Aymar Labs <span>·</span> Acervo do <a href={MOTION_SOURCE} target="_blank" rel="noreferrer">Prompt Motion ↗</a><br /><small>Vídeos, prompts e skills pertencem aos criadores indicados em cada item.</small></p><Link href="/">Voltar ao site ↗</Link></footer>
+    <footer className={styles.footer}><p>Biblioteca de motion <span>·</span> Aymar Labs<br /><small>Previews e prompts para copiar e usar.</small></p><Link href="/">Voltar ao site ↗</Link></footer>
 
     <dialog ref={dialog} className={styles.dialog} aria-label={`Preview e prompt${active ? `: ${active.title}` : ''}`} onClose={() => { fullVideo.current?.pause(); setActive(null); }} onClick={(event) => { if (event.target === event.currentTarget) dialog.current?.close(); }}>
       {active && <div className={styles.dialogInner}>

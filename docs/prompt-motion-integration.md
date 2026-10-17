@@ -25,21 +25,19 @@ Skill. One entry has both tags, so these counts overlap.
   or committed to this repository.
 - The detail modal fetches only the selected public prompt or skill text from its
   original page, then displays it beside the motion preview with an Aymar copy
-  button. The source page, creator profile, metadata, and source controls are not
-  embedded in the modal. Template and customization tools remain embedded from
-  their original routes.
-- Creator and source links remain visible. The source site's subscription,
-  submission, sponsorship and blog interfaces remain part of the original site,
-  rather than new Aymar endpoints.
+  button. The reference page, creator profile, outbound source links, template
+  pages, and customization tools are not shown in the Aymar experience.
+- The Aymar page has no outbound links to creator profiles or source pages.
 
 ## Coverage and limits
 
 The rendered gallery is checked against all 235 snapshot slugs, not a sample.
-Browser verification covers search, Prompt/Skill and category filters, pause,
-full-video loading, clipboard contents from an original prompt, template and
-customizer readers, and a 390-pixel mobile viewport.
+Earlier browser verification covered search, Prompt/Skill and category filters,
+pause, full-video loading, clipboard contents from an original prompt, template
+and customizer readers, and a 390-pixel mobile viewport. The updated dialog was
+checked against the observed prompt and skill markup before the production build.
 
-Media, original prompts and embedded tools still depend on the original hosts.
-The saved metadata is a fallback for the catalog, not offline storage of videos
-or prompt text. A future source markup or embedding-policy change may require an
-adapter update; the reader includes a direct source link for that reason.
+Media and prompt text still depend on the original hosts. Prompt text is fetched
+on demand by slug and cached for one hour; the saved metadata is a fallback for
+the catalog, not offline storage of videos or prompt text. A future source
+markup change may require an adapter update.
