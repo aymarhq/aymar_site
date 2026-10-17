@@ -483,6 +483,8 @@ main#top>.studio.copy-benefits{display:block;order:3;min-height:0}
   .videos-intro p{max-width:340px;margin-inline:auto;text-align:center}
   #contato .contact-content{margin-top:50px;text-align:center}
   #contato .contact-content>h2{text-align:center}
+  #contato .contact-content>h2 br{display:none}
+  #contato .contact-content>h2 em{display:inline}
   #contato .contact-content>div{width:min(88vw,360px);margin-top:16px}
   #contato .contact-content p{text-align:center}
 }
