@@ -27,7 +27,7 @@ export async function DELETE(request: Request) {
   const origin = request.headers.get('origin');
   if (origin && new URL(origin).host !== request.headers.get('host')) return NextResponse.json({ error: 'Origem inválida.' }, { status: 403 });
 
-  let body: { source?: unknown; pathname?: unknown; id?: unknown };
+  let body: { source?: unknown; pathname?: unknown; id?: unknown; pathnames?: unknown; ids?: unknown };
   try {
     body = await request.json();
   } catch {
@@ -35,6 +35,40 @@ export async function DELETE(request: Request) {
   }
 
   try {
+    if (body.source === 'upload' && Array.isArray(body.pathnames)) {
+      const pathnames = Array.from(new Set(body.pathnames.filter((value): value is string => typeof value === 'string')));
+      if (!pathnames.length || pathnames.length !== body.pathnames.length || pathnames.length > 300) return NextResponse.json({ error: 'Seleção de vídeos inválida.' }, { status: 400 });
+      const blobs = [];
+      for (const pathname of pathnames) {
+        const match = /^portfolio\/([a-z0-9-]+)\/([a-z0-9._-]+\.(?:mp4|mov|webm|m4v))$/.exec(pathname);
+        if (!match || !validSlugs.has(match[1])) return NextResponse.json({ error: 'Vídeo inválido.' }, { status: 400 });
+        const page = await list({ prefix: pathname, limit: 2 });
+        const blob = page.blobs.find(({ pathname: candidate }) => candidate === pathname);
+        if (!blob) return NextResponse.json({ error: 'Um ou mais vídeos não estão mais no armazenamento.' }, { status: 404 });
+        blobs.push(blob);
+      }
+      await del(blobs.map(({ url }) => url));
+      return NextResponse.json({ deleted: blobs.length, source: 'upload' });
+    }
+
+    if (body.source === 'drive' && Array.isArray(body.ids)) {
+      const ids = Array.from(new Set(body.ids.filter((value): value is string => typeof value === 'string')));
+      if (!ids.length || ids.length !== body.ids.length || ids.length > 300) return NextResponse.json({ error: 'Seleção de vídeos inválida.' }, { status: 400 });
+      const knownIds = new Set(portfolioOffers.flatMap((offer) => offer.videos.map(({ id }) => id)));
+      if (ids.some((id) => !knownIds.has(id))) return NextResponse.json({ error: 'Um ou mais vídeos são inválidos.' }, { status: 400 });
+      const { ids: hiddenIds, etag } = await readHiddenDriveVideos();
+      const hidden = new Set([...hiddenIds, ...ids]);
+      await put(manifestPath, JSON.stringify(Array.from(hidden)), {
+        access: 'public',
+        addRandomSuffix: false,
+        allowOverwrite: true,
+        contentType: 'application/json',
+        cacheControlMaxAge: 60,
+        ...(etag ? { ifMatch: etag } : {}),
+      });
+      return NextResponse.json({ deleted: ids.length, source: 'drive' });
+    }
+
     if (body.source === 'upload' && typeof body.pathname === 'string') {
       const match = /^portfolio\/([a-z0-9-]+)\/([a-z0-9._-]+\.(?:mp4|mov|webm|m4v))$/.exec(body.pathname);
       if (!match || !validSlugs.has(match[1])) return NextResponse.json({ error: 'Vídeo inválido.' }, { status: 400 });

@@ -286,11 +286,9 @@ html[data-theme=light] .brand-wordmark{filter:invert(1)}
   .work-editorial>p{font-size:14px}
 }
 
-.brand-logo{display:inline-flex;align-items:center;gap:11px;position:relative;background:transparent;color:inherit;line-height:0}
+.brand-logo{display:inline-flex;align-items:center;position:relative;background:transparent;color:inherit;line-height:0}
 .brand-logo img{display:block;width:100%;height:auto;object-fit:contain;filter:none;mix-blend-mode:normal}
 .brand-logo-sm{width:116px}.brand-logo-md{width:150px}.brand-logo-lg{width:190px;align-self:start}
-.brand-logo>span{display:block;width:7px;height:7px;flex:none;border-radius:50%;background:var(--foreground);transition:background-color .3s cubic-bezier(.22,1,.36,1)}
-.brand-logo:hover>span{background:var(--accent)}
 .brand-logo.logo-footer{width:190px}
 .mobile-nav-brand{margin-bottom:28px}
 .dock-brand{margin:5px 6px 9px;width:104px}
@@ -321,7 +319,6 @@ html,body{overflow-x:clip}
 body.fullscreen-nav-open{overflow:hidden}
 body.fullscreen-nav-open .back-to-top,body.fullscreen-nav-open .cursor{display:none}
 .header.menu-active,.header.menu-active.scrolled{z-index:81;background:transparent;border-color:transparent;backdrop-filter:none;color:#f5f4ef}
-.header.menu-active .brand-logo>span{background:#f5f4ef}
 html[data-theme=light] .header.menu-active .brand-logo img{filter:none}
 .header.menu-active .header-menu-toggle{color:#f5f4ef}
 .header-menu-toggle .site-menu-icon{display:block;width:23px;height:23px;margin:0}
