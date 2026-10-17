@@ -7,8 +7,23 @@ import { MOTION_SOURCE, motionCategories, type MotionEntry } from '../../lib/pro
 import styles from './prompt-motion.module.css';
 
 type LibraryView = 'gallery' | 'templates' | 'customize';
-type ReaderView = 'video' | 'prompt';
 const categoryNames: Record<string, string> = Object.fromEntries(motionCategories);
+
+type PromptDetails = { prompt?: string; skillDescription?: string; skillCommand?: string };
+
+function markupText(markup: string | null | undefined) {
+  if (!markup) return '';
+  return new DOMParser().parseFromString(markup, 'text/html').body.textContent?.trim() ?? '';
+}
+
+function SourceReader({ path, label }: { path: string; label: string }) {
+  const [loading, setLoading] = useState(true);
+  return <div className={styles.sourceReader}>
+    {loading && <div className={styles.readerLoading} role="status">Carregando conteúdo original…</div>}
+    <iframe key={path} src={`${MOTION_SOURCE}${path}`} title={label} allow="clipboard-write; fullscreen" allowFullScreen
+      referrerPolicy="strict-origin-when-cross-origin" onLoad={() => setLoading(false)} />
+  </div>;
+}
 
 function Preview({ entry, paused }: { entry: MotionEntry; paused: boolean }) {
   const ref = useRef<HTMLVideoElement>(null);
@@ -37,15 +52,6 @@ function Preview({ entry, paused }: { entry: MotionEntry; paused: boolean }) {
     muted loop playsInline preload="none" aria-hidden="true" tabIndex={-1} />;
 }
 
-function SourceReader({ path, label }: { path: string; label: string }) {
-  const [loading, setLoading] = useState(true);
-  return <div className={styles.sourceReader}>
-    {loading && <div className={styles.readerLoading} role="status">Carregando conteúdo original…</div>}
-    <iframe key={path} src={`${MOTION_SOURCE}${path}`} title={label} allow="clipboard-write; fullscreen" allowFullScreen
-      referrerPolicy="strict-origin-when-cross-origin" onLoad={() => setLoading(false)} />
-  </div>;
-}
-
 export default function PromptMotion({ entries }: { entries: MotionEntry[] }) {
   const [view, setView] = useState<LibraryView>('gallery');
   const [query, setQuery] = useState('');
@@ -54,7 +60,12 @@ export default function PromptMotion({ entries }: { entries: MotionEntry[] }) {
   const [sort, setSort] = useState('popular');
   const [paused, setPaused] = useState(false);
   const [active, setActive] = useState<MotionEntry | null>(null);
-  const [readerView, setReaderView] = useState<ReaderView>('prompt');
+  const [promptDetails, setPromptDetails] = useState<PromptDetails | null>(null);
+  const [promptLoading, setPromptLoading] = useState(false);
+  const [promptError, setPromptError] = useState('');
+  const [copyError, setCopyError] = useState('');
+  const [copied, setCopied] = useState(false);
+  const [promptAttempt, setPromptAttempt] = useState(0);
   const dialog = useRef<HTMLDialogElement>(null);
   const fullVideo = useRef<HTMLVideoElement>(null);
   const grid = useRef<HTMLDivElement>(null);
@@ -125,7 +136,54 @@ export default function PromptMotion({ entries }: { entries: MotionEntry[] }) {
     return () => { document.body.style.overflow = previous; };
   }, [active]);
 
-  function openEntry(entry: MotionEntry, tab: ReaderView) { setReaderView(tab); setActive(entry); }
+  useEffect(() => {
+    if (!active) return;
+    const controller = new AbortController();
+    setPromptDetails(null);
+    setPromptError('');
+    setCopyError('');
+    setCopied(false);
+    setPromptLoading(true);
+    fetch(`/api/promptsmotion/${encodeURIComponent(active.slug)}`, { signal: controller.signal })
+      .then(async (response) => {
+        const payload = await response.json();
+        if (!response.ok) throw new Error(payload.error || 'Não foi possível carregar o prompt.');
+        return payload;
+      })
+      .then((payload) => setPromptDetails({
+        prompt: markupText(payload.promptHtml),
+        skillDescription: markupText(payload.skill?.descriptionHtml),
+        skillCommand: markupText(payload.skill?.commandHtml),
+      }))
+      .catch((error: unknown) => {
+        if (!controller.signal.aborted) setPromptError(error instanceof Error ? error.message : 'Não foi possível carregar o prompt.');
+      })
+      .finally(() => { if (!controller.signal.aborted) setPromptLoading(false); });
+    return () => controller.abort();
+  }, [active, promptAttempt]);
+
+  function openEntry(entry: MotionEntry) { setActive(entry); }
+  async function copyPrompt() {
+    const value = [promptDetails?.prompt, promptDetails?.skillDescription, promptDetails?.skillCommand].filter(Boolean).join('\n\n');
+    if (!value) return;
+    try {
+      await navigator.clipboard.writeText(value);
+      setCopied(true);
+      setCopyError('');
+    } catch {
+      const field = document.createElement('textarea');
+      field.value = value;
+      field.style.position = 'fixed';
+      field.style.opacity = '0';
+      document.body.appendChild(field);
+      field.select();
+      const success = document.execCommand('copy');
+      field.remove();
+      setCopied(success);
+      if (!success) setCopyError('Não foi possível copiar automaticamente. Selecione o texto para copiá-lo.');
+    }
+    window.setTimeout(() => setCopied(false), 1800);
+  }
   function toggleCategory(category: string) {
     setCategories((selection) => selection.includes(category) ? selection.filter((item) => item !== category) : [...selection, category]);
   }
@@ -167,14 +225,14 @@ export default function PromptMotion({ entries }: { entries: MotionEntry[] }) {
 
       <div className={styles.results}><span aria-live="polite">{filtered.length} de {entries.length} animações</span>{(query || categories.length > 0 || kind !== 'all') ? <button onClick={() => { setQuery(''); setCategories([]); setKind('all'); }}>Limpar filtros ×</button> : <span>VÍDEOS E PROMPTS DOS CRIADORES ORIGINAIS</span>}</div>
       <div ref={grid} className={styles.grid}>{filtered.map((entry) => <article className={styles.card} key={entry.slug} data-motion-slug={entry.slug}>
-        <button className={styles.previewButton} style={{ aspectRatio: `${entry.width} / ${entry.height}` }} onClick={() => openEntry(entry, 'video')} aria-label={`Assistir: ${entry.title} por @${entry.handle}`}>
+        <button className={styles.previewButton} style={{ aspectRatio: `${entry.width} / ${entry.height}` }} onClick={() => openEntry(entry)} aria-label={`Assistir: ${entry.title}`}>
           <Preview entry={entry} paused={paused || Boolean(active)} />
           <span className={styles.previewCaption}>Assistir animação <span aria-hidden="true">↗</span></span>
         </button>
         <div className={styles.cardInfo}>
           <div className={styles.cardTop}><a href={`https://x.com/${entry.handle}`} target="_blank" rel="noreferrer">@{entry.handle}</a><span>{entry.tags.map((tag) => tag === 'skill' ? 'Skill' : 'Prompt').join(' + ')}</span></div>
-          <button className={styles.titleButton} onClick={() => openEntry(entry, 'prompt')}><h2>{entry.title}</h2></button>
-          <div className={styles.cardBottom}><div className={styles.tags}>{entry.contentTags.map((tag) => <button key={tag} onClick={() => setCategories([tag])}>{categoryNames[tag] ?? tag}</button>)}</div><button className={styles.promptButton} onClick={() => openEntry(entry, 'prompt')}>{entry.tags.includes('prompt') ? 'Ver prompt' : 'Ver skill'} <span aria-hidden="true">↗</span></button></div>
+        <button className={styles.titleButton} onClick={() => openEntry(entry)}><h2>{entry.title}</h2></button>
+        <div className={styles.cardBottom}><div className={styles.tags}>{entry.contentTags.map((tag) => <button key={tag} onClick={() => setCategories([tag])}>{categoryNames[tag] ?? tag}</button>)}</div><button className={styles.promptButton} onClick={() => openEntry(entry)}>{entry.tags.includes('prompt') ? 'Ver prompt' : 'Ver skill'} <span aria-hidden="true">↗</span></button></div>
         </div>
       </article>)}</div>
       {!filtered.length && <div className={styles.empty}><h2>Nenhuma animação com esses filtros.</h2><p>Tente outro nome, criador ou combinação de categorias.</p><button onClick={() => { setCategories([]); setQuery(''); setKind('all'); }}>Ver todas as animações ↗</button></div>}
@@ -182,11 +240,18 @@ export default function PromptMotion({ entries }: { entries: MotionEntry[] }) {
 
     <footer className={styles.footer}><p>Biblioteca Aymar Labs <span>·</span> Acervo do <a href={MOTION_SOURCE} target="_blank" rel="noreferrer">Prompt Motion ↗</a><br /><small>Vídeos, prompts e skills pertencem aos criadores indicados em cada item.</small></p><Link href="/">Voltar ao site ↗</Link></footer>
 
-    <dialog ref={dialog} className={styles.dialog} aria-labelledby="motion-title" onClose={() => { fullVideo.current?.pause(); setActive(null); }} onClick={(event) => { if (event.target === event.currentTarget) dialog.current?.close(); }}>
+    <dialog ref={dialog} className={styles.dialog} aria-label={`Preview e prompt${active ? `: ${active.title}` : ''}`} onClose={() => { fullVideo.current?.pause(); setActive(null); }} onClick={(event) => { if (event.target === event.currentTarget) dialog.current?.close(); }}>
       {active && <div className={styles.dialogInner}>
-        <div className={styles.dialogHead}><div><a href={`https://x.com/${active.handle}`} target="_blank" rel="noreferrer">@{active.handle}</a><h2 id="motion-title">{active.title}</h2></div><button className={styles.closeButton} onClick={() => dialog.current?.close()} aria-label="Fechar animação">×</button></div>
-        <div className={styles.readerTabs}><div><button aria-pressed={readerView === 'video'} onClick={() => setReaderView('video')}>Vídeo original</button><button aria-pressed={readerView === 'prompt'} onClick={() => setReaderView('prompt')}>Prompt{active.tags.includes('skill') ? ' / Skill' : ''} original</button></div><a href={`${MOTION_SOURCE}/${active.slug}`} target="_blank" rel="noreferrer">Abrir na fonte ↗</a></div>
-        {readerView === 'video' ? <div className={styles.fullPlayer}><video ref={fullVideo} src={active.video} poster={active.poster} controls autoPlay playsInline preload="metadata" /><button onClick={() => setReaderView('prompt')}>{active.tags.includes('prompt') ? 'Abrir o prompt desta animação' : 'Abrir a skill desta animação'} <span aria-hidden="true">↗</span></button></div> : <><p className={styles.readerNote}>Use o botão <strong>Copy</strong> na página original abaixo para copiar o prompt ou o comando da skill.</p><SourceReader key={active.slug} path={`/${active.slug}`} label={`Prompt e animação original: ${active.title}`} /></>}
+        <div className={styles.dialogHead}><button className={styles.closeButton} onClick={() => dialog.current?.close()} aria-label="Fechar animação">×</button></div>
+        <div className={styles.fullPlayer}><video ref={fullVideo} src={active.video} poster={active.poster} controls autoPlay playsInline preload="metadata" width={active.width} height={active.height} /></div>
+        <section className={styles.promptPanel} aria-label="Prompt para copiar">
+          <div className={styles.promptToolbar}><span>{active.tags.includes('skill') ? (active.tags.includes('prompt') ? 'PROMPT + SKILL' : 'SKILL') : 'PROMPT'}</span><button onClick={copyPrompt} disabled={promptLoading || !promptDetails}>{copied ? 'COPIADO ✓' : 'COPIAR'}</button></div>
+          {promptLoading ? <p className={styles.promptStatus} role="status">Carregando prompt…</p> : promptError ? <p className={styles.promptStatus} role="alert">{promptError} <button onClick={() => setPromptAttempt((attempt) => attempt + 1)}>Tentar novamente</button></p> : <div className={styles.promptContent}>
+            {promptDetails?.prompt && <pre>{promptDetails.prompt}</pre>}
+            {promptDetails?.skillDescription && <><p>{promptDetails.skillDescription}</p>{promptDetails.skillCommand && <code>{promptDetails.skillCommand}</code>}</>}
+            {copyError && <p role="alert">{copyError}</p>}
+          </div>}
+        </section>
       </div>}
     </dialog>
   </main>;

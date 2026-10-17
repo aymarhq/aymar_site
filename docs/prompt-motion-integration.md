@@ -23,9 +23,11 @@ Skill. One entry has both tags, so these counts overlap.
 - Videos use the original remote preview and full-video URLs. Previews and posters
   load near the viewport; offscreen previews pause. No videos are copied to Blob
   or committed to this repository.
-- Original prompts and skill install controls are available through embedded
-  original detail pages. The reader delegates clipboard-write to that frame.
-  Template and customization tools are also embedded from their original routes.
+- The detail modal fetches only the selected public prompt or skill text from its
+  original page, then displays it beside the motion preview with an Aymar copy
+  button. The source page, creator profile, metadata, and source controls are not
+  embedded in the modal. Template and customization tools remain embedded from
+  their original routes.
 - Creator and source links remain visible. The source site's subscription,
   submission, sponsorship and blog interfaces remain part of the original site,
   rather than new Aymar endpoints.

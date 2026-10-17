@@ -13,3 +13,18 @@
 @media(min-width:1700px){.grid{--motion-columns:4}}
 @media(max-width:760px){.grid{--motion-columns:2}}
 @media(max-width:370px){.grid{--motion-columns:1}}
+
+.dialog{width:min(1000px,calc(100vw - 48px))}
+.dialogHead{padding:14px 18px 10px;justify-content:flex-end}
+.fullPlayer{display:grid;place-items:center;min-height:0;padding:0 24px;background:#080808}
+.fullPlayer video{width:auto;height:auto;max-width:100%;max-height:54dvh;object-fit:contain;background:#080808}
+.promptPanel{padding:20px 24px 26px}
+.promptToolbar{display:flex;justify-content:space-between;align-items:center;gap:18px;padding-bottom:12px;border-bottom:1px solid #303030;font:9px 'JetBrains Mono',monospace;letter-spacing:.06em;color:#0a84ff}
+.promptToolbar button{padding:9px 13px;border:1px solid #0a84ff;background:#0a84ff;color:#090909;font:700 10px 'JetBrains Mono',monospace;cursor:pointer}
+.promptToolbar button:disabled{opacity:.5;cursor:wait}
+.promptContent{display:grid;gap:16px;padding-top:17px}
+.promptContent pre,.promptContent p{margin:0;color:#e4e4e4;font-size:14px;line-height:1.7;white-space:pre-wrap;overflow-wrap:anywhere}
+.promptContent code{display:block;padding:13px 15px;border:1px solid #303030;background:#151515;color:#f5f4ef;font:12px/1.6 'JetBrains Mono',monospace;white-space:pre-wrap;overflow-wrap:anywhere}
+.promptStatus{padding:22px 0;color:#aaa;font-size:13px;line-height:1.6}
+.promptStatus button{margin-left:8px;border:0;border-bottom:1px solid #555;background:none;color:#f5f4ef;font:inherit;cursor:pointer}
+@media(max-width:760px){.dialog{width:calc(100vw - 20px)}.dialogHead{padding:12px 14px 9px}.fullPlayer{padding:0 12px}.fullPlayer video{max-height:47dvh}.promptPanel{padding:16px 16px 20px}.promptContent pre,.promptContent p{font-size:13px}}
