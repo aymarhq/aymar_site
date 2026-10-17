@@ -33,7 +33,7 @@ function Preview({ entry, paused }: { entry: MotionEntry; paused: boolean }) {
     else video.pause();
   }, [near, paused, loaded]);
 
-  return <video ref={ref} className={styles.previewVideo} src={loaded ? entry.preview : undefined} poster={loaded ? entry.poster : undefined}
+  return <video ref={ref} className={styles.previewVideo} width={entry.width} height={entry.height} src={loaded ? entry.preview : undefined} poster={loaded ? entry.poster : undefined}
     muted loop playsInline preload="none" aria-hidden="true" tabIndex={-1} />;
 }
 
@@ -57,6 +57,7 @@ export default function PromptMotion({ entries }: { entries: MotionEntry[] }) {
   const [readerView, setReaderView] = useState<ReaderView>('prompt');
   const dialog = useRef<HTMLDialogElement>(null);
   const fullVideo = useRef<HTMLVideoElement>(null);
+  const grid = useRef<HTMLDivElement>(null);
 
   const counts = useMemo(() => ({ prompt: entries.filter((entry) => entry.tags.includes('prompt')).length, skill: entries.filter((entry) => entry.tags.includes('skill')).length }), [entries]);
   const matching = useMemo(() => {
@@ -71,6 +72,43 @@ export default function PromptMotion({ entries }: { entries: MotionEntry[] }) {
     if (sort === 'title') result.sort((a, b) => a.title.localeCompare(b.title));
     return result;
   }, [matching, categories, sort]);
+
+  useEffect(() => {
+    const container = grid.current;
+    if (!container || view !== 'gallery') return;
+    const cards = Array.from(container.children) as HTMLElement[];
+    let frame = 0;
+    function arrange() {
+      const style = getComputedStyle(container!);
+      const columns = Number(style.getPropertyValue('--motion-columns')) || 1;
+      const gap = parseFloat(style.columnGap) || 0;
+      const rowGap = parseFloat(style.rowGap) || 0;
+      const width = (container!.clientWidth - gap * (columns - 1)) / columns;
+      if (width <= 0) return;
+      container!.dataset.masonry = 'true';
+      cards.forEach((card) => { card.style.width = `${width}px`; });
+      const heights = cards.map((card) => card.getBoundingClientRect().height);
+      const bottoms = Array<number>(columns).fill(0);
+      cards.forEach((card, index) => {
+        const column = bottoms.indexOf(Math.min(...bottoms));
+        card.style.transform = `translate(${column * (width + gap)}px, ${bottoms[column]}px)`;
+        bottoms[column] += heights[index] + rowGap;
+      });
+      container!.style.height = `${Math.max(0, Math.max(...bottoms) - rowGap)}px`;
+    }
+    const schedule = () => { cancelAnimationFrame(frame); frame = requestAnimationFrame(arrange); };
+    const observer = new ResizeObserver(schedule);
+    observer.observe(container);
+    cards.forEach((card) => observer.observe(card));
+    schedule();
+    return () => {
+      cancelAnimationFrame(frame);
+      observer.disconnect();
+      delete container.dataset.masonry;
+      container.style.height = '';
+      cards.forEach((card) => { card.style.width = ''; card.style.transform = ''; });
+    };
+  }, [filtered, view]);
 
   useEffect(() => {
     if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) setPaused(true);
@@ -128,8 +166,8 @@ export default function PromptMotion({ entries }: { entries: MotionEntry[] }) {
       </div></div>
 
       <div className={styles.results}><span aria-live="polite">{filtered.length} de {entries.length} animações</span>{(query || categories.length > 0 || kind !== 'all') ? <button onClick={() => { setQuery(''); setCategories([]); setKind('all'); }}>Limpar filtros ×</button> : <span>VÍDEOS E PROMPTS DOS CRIADORES ORIGINAIS</span>}</div>
-      <div className={styles.grid}>{filtered.map((entry) => <article className={styles.card} key={entry.slug} data-motion-slug={entry.slug}>
-        <button className={styles.previewButton} onClick={() => openEntry(entry, 'video')} aria-label={`Assistir: ${entry.title} por @${entry.handle}`}>
+      <div ref={grid} className={styles.grid}>{filtered.map((entry) => <article className={styles.card} key={entry.slug} data-motion-slug={entry.slug}>
+        <button className={styles.previewButton} style={{ aspectRatio: `${entry.width} / ${entry.height}` }} onClick={() => openEntry(entry, 'video')} aria-label={`Assistir: ${entry.title} por @${entry.handle}`}>
           <Preview entry={entry} paused={paused || Boolean(active)} />
           <span className={styles.previewCaption}>Assistir animação <span aria-hidden="true">↗</span></span>
         </button>
