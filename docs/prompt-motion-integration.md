@@ -24,9 +24,12 @@ Skill. One entry has both tags, so these counts overlap.
   load near the viewport; offscreen previews pause. No videos are copied to Blob
   or committed to this repository.
 - The detail modal fetches only the selected public prompt or skill text from its
-  original page, then displays it beside the motion preview with an Aymar copy
+  local snapshot, then displays it beside the motion preview with an Aymar copy
   button. The reference page, creator profile, outbound source links, template
   pages, and customization tools are not shown in the Aymar experience.
+- `lib/prompt-motion-prompts.json` stores the extracted prompt and skill text for
+  all 235 catalog entries. `scripts/snapshot-prompt-motion-prompts.mjs` refreshes
+  this snapshot from the publicly rendered source pages.
 - The Aymar page has no outbound links to creator profiles or source pages.
 
 ## Coverage and limits
@@ -37,7 +40,7 @@ pause, full-video loading, clipboard contents from an original prompt, template
 and customizer readers, and a 390-pixel mobile viewport. The updated dialog was
 checked against the observed prompt and skill markup before the production build.
 
-Media and prompt text still depend on the original hosts. Prompt text is fetched
-on demand by slug and cached for one hour; the saved metadata is a fallback for
-the catalog, not offline storage of videos or prompt text. A future source
-markup change may require an adapter update.
+Preview and full-size media still depend on the original media host. Prompt text
+is served from the committed snapshot, so copying it does not require a live
+request to the reference page. A future source markup change may require the
+snapshot script's adapter to be updated.
