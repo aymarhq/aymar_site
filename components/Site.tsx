@@ -55,7 +55,7 @@ function FullscreenMenu({ dict, open, setOpen }: { dict: Dict; open: boolean; se
   const menuVideos = [
     { source: '/videos/c_ctv9_UGC3.mp4', poster: '/videos/c_ctv9_UGC3.jpg', title: 'Criativo UGC' },
     { source: '/videos/ctv1_2.mp4', poster: '/videos/ctv1_2.jpg', title: 'Prova e desejo' },
-    { source: '/videos/e_a2.mp4', poster: '/videos/e_a2.jpg', title: 'Hook de campanha' },
+    { source: '/videos/ctv_ugc_paletas.mp4', poster: '/videos/ctv_ugc_paletas.jpg', title: 'Criativo UGC — paletas' },
     { source: '/videos/A1_Model.mp4', poster: '/videos/A1_Model.jpg', title: 'Variação para anúncio' },
   ];
   const menuSites = [projectInfo[5], projectInfo[1], projectInfo[6], projectInfo[3], projectInfo[0]];
@@ -181,7 +181,7 @@ const videoWorks = [
   { title: 'Copy para bolo', meta: 'vídeo de vendas · 9:16', source: '/videos/ctv_copy1_bolo.mp4', poster: '/videos/ctv_copy1_bolo.jpg' },
   { title: 'Criativo UGC', meta: 'vídeo de vendas · 9:16', source: '/videos/c_ctv9_UGC3.mp4', poster: '/videos/c_ctv9_UGC3.jpg' },
   { title: 'Variação para anúncio', meta: 'reels · performance', source: '/videos/A1_Model.mp4', poster: '/videos/A1_Model.jpg' },
-  { title: 'Hook de campanha', meta: 'hook · WhatsApp X1', source: '/videos/e_a2.mp4', poster: '/videos/e_a2.jpg' },
+  { title: 'Criativo UGC — paletas', meta: 'UGC · 9:16', source: '/videos/ctv_ugc_paletas.mp4', poster: '/videos/ctv_ugc_paletas.jpg' },
   { title: 'Oferta em movimento', meta: 'criativo · conversão', source: '/videos/Copy_1.mp4', poster: '/videos/Copy_1.jpg' },
   { title: 'Prova e desejo', meta: 'UGC · anúncio', source: '/videos/ctv1_2.mp4', poster: '/videos/ctv1_2.jpg' },
 ];
@@ -248,7 +248,6 @@ function VideoCard({ item, index }: { item: typeof videoWorks[number]; index: nu
       <div className="video-shade" />
       <span className="video-number">{String(index + 1).padStart(2, '0')}</span>
       <button className="video-sound" type="button" onClick={toggleSound} aria-label={muted ? 'Ativar som' : 'Mutar vídeo'}>{muted ? <VolumeOff /> : <VolumeOn />}</button>
-      <div className="video-caption"><strong>{item.title}</strong><small>{item.meta}</small></div>
     </div>
   </article>;
 }

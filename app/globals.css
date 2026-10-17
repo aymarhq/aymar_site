@@ -458,3 +458,6 @@ main#top>.studio.copy-benefits{display:block;order:3;min-height:0}
 .hero-centered h1{max-width:1280px;font-size:clamp(64px,7.4vw,110px);line-height:.98;letter-spacing:-.075em}
 .hero-centered h1 em{white-space:normal}
 @media(max-width:719px){.hero-centered h1{font-size:clamp(48px,12.5vw,62px);line-height:.97}.hero-centered h1 em{font-size:inherit;letter-spacing:-.065em;white-space:normal}}
+
+/* Video cards are clean previews; keep only a light top tint for controls. */
+.video-shade{background:linear-gradient(180deg,rgba(0,0,0,.32),transparent 27%)}
