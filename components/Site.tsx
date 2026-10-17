@@ -118,7 +118,7 @@ function FullscreenMenu({ dict, open, setOpen }: { dict: Dict; open: boolean; se
       <div className="site-menu-media-column">
         <span className="site-menu-column-title">{dict.lang === 'pt' ? 'Vídeos' : 'Videos'}</span>
         <div className="site-menu-media-track" ref={videoTrack} onScroll={loopTrack} aria-label={dict.lang === 'pt' ? 'Vídeos; role para ver mais' : 'Videos; scroll for more'} tabIndex={0}>
-          {[0, 1, 2].flatMap(repeat => menuVideos.map(item => <button className="site-menu-media-card site-menu-video" type="button" key={`${repeat}-${item.source}`} aria-label={`${dict.lang === 'pt' ? 'Assistir' : 'Watch'}: ${item.title}`} onClick={event => { videoTrigger.current = event.currentTarget; setActiveVideo(item); }}><Image src={item.poster} alt="" fill sizes="(max-width: 719px) 42vw, 24vw" /><span className="site-menu-card-action" aria-hidden="true"><Play /></span><span className="site-menu-card-caption">{item.title}</span></button>))}
+          {[0, 1, 2].flatMap(repeat => menuVideos.map(item => <button className="site-menu-media-card site-menu-video" type="button" key={`${repeat}-${item.source}`} aria-label={`${dict.lang === 'pt' ? 'Assistir' : 'Watch'}: ${item.title}`} onClick={event => { videoTrigger.current = event.currentTarget; setActiveVideo(item); }}><Image src={item.poster} alt="" fill sizes="(max-width: 719px) 42vw, 24vw" /><span className="site-menu-card-action" aria-hidden="true"><Play /></span></button>))}
         </div>
       </div>
       <div className="site-menu-media-column">
