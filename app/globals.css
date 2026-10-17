@@ -482,7 +482,7 @@ main#top>.studio.copy-benefits{display:block;order:3;min-height:0}
   .videos-intro h2 em{display:inline;margin-left:.18em}
   .videos-intro p{max-width:340px;margin-inline:auto;text-align:center}
   #contato .contact-content{margin-top:50px;text-align:center}
-  #contato .contact-content>h2{text-align:center}
+  #contato .contact-content>h2{text-align:center;font-weight:700}
   #contato .contact-content>h2 br{display:none}
   #contato .contact-content>h2 em{display:inline;margin-left:.16em}
   #contato .contact-content>div{width:min(88vw,360px);margin-top:16px}
