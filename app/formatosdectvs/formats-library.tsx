@@ -44,7 +44,7 @@ export default function FormatsLibrary({ catalog, username }: { catalog: Formats
     <header className={styles.header}>
       <BrandLogo size="sm" className={styles.logo} href="/" />
       <span className={styles.headerLabel}>Biblioteca de formatos</span>
-      <nav className={styles.headerNav} aria-label="Navegação da biblioteca"><button onClick={() => bonusSection.current?.scrollIntoView({ behavior: 'smooth' })}>Bônus</button><a href={catalog.supportUrl} target="_blank" rel="noopener noreferrer">Suporte <ArrowUpRight /></a><a href={catalog.groupUrl} target="_blank" rel="noopener noreferrer">Grupo <ArrowUpRight /></a></nav>
+      <nav className={styles.headerNav} aria-label="Navegação da biblioteca"><button onClick={() => bonusSection.current?.scrollIntoView({ behavior: 'smooth' })}>Bônus</button><a href={catalog.supportUrl} target="_blank" rel="noopener noreferrer">Suporte <ArrowUpRight /></a>{catalog.groupUrl && <a href={catalog.groupUrl} target="_blank" rel="noopener noreferrer">Grupo <ArrowUpRight /></a>}</nav>
     </header>
 
     <section className={styles.hero}>
@@ -64,9 +64,12 @@ export default function FormatsLibrary({ catalog, username }: { catalog: Formats
     </section>
 
     <section ref={bonusSection} className={styles.bonuses} aria-labelledby="bonus-title"><span className={styles.sectionLabel}>PARA CONTINUAR CRIANDO</span><h2 id="bonus-title">Os bônus<span>.</span></h2>
-      <div className={styles.bonusGrid}>{catalog.bonuses.map((bonus) => <a href={bonus.url} target="_blank" rel="noopener noreferrer" key={bonus.number} className={styles.bonusCard} data-bonus-number={bonus.number}>
-        <div className={styles.bonusTop}><span>{bonus.number}</span><span aria-hidden="true"><ArrowUpRight /></span></div><div className={styles.bonusImage}><Image src={bonus.image} alt="" fill sizes="(max-width: 760px) 45vw, 25vw" /></div><h3>{bonus.title}</h3><span className={styles.bonusLink}>ACESSAR BÔNUS <ArrowUpRight /></span>
-      </a>)}</div>
+      <div className={styles.bonusGrid}>{catalog.bonuses.map((bonus) => {
+        const content = <><div className={styles.bonusTop}><span>{bonus.number}</span>{bonus.url && <span aria-hidden="true"><ArrowUpRight /></span>}</div><div className={styles.bonusImage}><Image src={bonus.image} alt="" fill sizes="(max-width: 760px) 45vw, 25vw" /></div><h3>{bonus.title}</h3>{bonus.url && <span className={styles.bonusLink}>ACESSAR BÔNUS <ArrowUpRight /></span>}</>;
+        return bonus.url
+          ? <a href={bonus.url} target="_blank" rel="noopener noreferrer" key={bonus.number} className={styles.bonusCard} data-bonus-number={bonus.number}>{content}</a>
+          : <div key={bonus.number} className={styles.bonusCard} data-bonus-number={bonus.number}>{content}</div>;
+      })}</div>
     </section>
 
     <footer className={styles.footer}><div><span>© {new Date().getFullYear()} Aymar Labs</span><small>Conteúdo do acervo Serraglio / DVN Copy, reproduzido com autorização.</small></div><div className={styles.footerLinks}><Link href="/portfoliodectvs">Portfólio de CTVs <ArrowUpRight /></Link><Link href="/promptsmotion">Prompts Motion <ArrowUpRight /></Link><button onClick={async () => { await fetch('/api/portfolio/session', { method: 'DELETE' }); router.refresh(); }}>Sair</button></div></footer>

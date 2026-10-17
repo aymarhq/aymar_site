@@ -17,7 +17,7 @@ export type CreativeFormat = {
 export type FormatsCatalog = {
   source: string;
   formats: CreativeFormat[];
-  bonuses: { number: string; title: string; image: string; url: string }[];
+  bonuses: { number: string; title: string; image: string; url: string | null }[];
   supportUrl: string;
-  groupUrl: string;
+  groupUrl: string | null;
 };
