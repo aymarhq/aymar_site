@@ -355,3 +355,30 @@ html[data-theme=light] .header.menu-active .brand-logo img{filter:none}
 @media(prefers-reduced-motion:reduce){.site-menu-icon i,.site-menu-links a,.site-menu-site img{transition:none}.site-menu-video video{display:none}.site-menu-video{background-size:cover;background-position:center}.site-menu-video:first-child{background-image:url('/videos/c_ctv9_UGC3.jpg')}.site-menu-video:last-child{background-image:url('/videos/ctv1_2.jpg')}}
 .hero-bottom{justify-content:flex-end}
 .contact-links{margin-top:72px}
+
+/* Centered offer story while keeping the existing site header untouched. */
+.hero-centered{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100svh;padding:136px 5.5vw 76px;text-align:center}
+.hero-centered .hero-content{width:min(100%,1120px);margin:auto}
+.hero-centered .hero-eyebrow{display:block;color:var(--muted);letter-spacing:.12em}
+.hero-centered .hero-eyebrow i{margin-right:11px;background:var(--accent)}
+.hero-centered h1{width:100%;max-width:1120px;margin:27px auto 0;font-size:clamp(48px,6.4vw,92px);line-height:1.03;letter-spacing:-.07em;font-weight:600}
+.hero-centered h1 span{display:block;width:auto;min-width:0;max-width:none;white-space:normal}
+.hero-centered h1 em{display:block;max-width:none;font-style:italic;font-weight:650;color:var(--accent)}
+.hero-centered .hero-description{width:min(100%,660px);max-width:none;margin:28px auto 0;font-size:clamp(15px,1.4vw,18px);line-height:1.5}
+.hero-centered .hero-cta{display:inline-flex;align-items:center;justify-content:center;gap:18px;min-height:58px;min-width:304px;width:auto;margin:32px auto 0;padding:16px 25px;border:1px solid var(--accent);border-radius:4px;background:var(--accent);color:#fff;font:600 13px Inter,Arial,sans-serif;text-transform:none;letter-spacing:0;transition:transform .3s ease,box-shadow .3s ease}
+.hero-centered .hero-cta:hover,.hero-centered .hero-cta:focus-visible{transform:translateY(-3px);box-shadow:0 12px 32px rgba(10,132,255,.22);color:#fff;outline:none}
+.hero-centered .hero-cta .ui-icon{width:16px;height:16px;margin:0;transition:transform .3s ease}
+.hero-centered .hero-cta:hover .ui-icon,.hero-centered .hero-cta:focus-visible .ui-icon{transform:translate(3px,-3px)}
+.hero-pillars{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));width:min(100%,850px);margin:67px auto 0;border-top:1px solid var(--border)}
+.hero-pillars h2{padding:20px 14px 0;font-size:clamp(12px,1.35vw,17px);font-weight:650;line-height:1.2;letter-spacing:-.025em;text-transform:uppercase}
+.hero-pillars h2+h2{border-left:1px solid var(--border)}
+.hero-centered .hero-bottom{position:absolute;bottom:24px;left:5.5vw;right:5.5vw}
+
+/* The reference's travelling light sweep, adapted to Aymar's existing CTA shapes. */
+.shine-cta{position:relative;isolation:isolate;overflow:hidden}
+.shine-cta::before{content:"";position:absolute;inset:-55% auto -55% -45%;width:42%;z-index:0;pointer-events:none;background:linear-gradient(90deg,transparent,rgba(255,255,255,.48),transparent);transform:skewX(-25deg);animation:cta-shine 3.7s ease-in-out infinite}
+.shine-cta .ui-icon,.shine-cta>span{position:relative;z-index:1}
+@keyframes cta-shine{0%,24%{transform:skewX(-25deg) translateX(0)}68%,100%{transform:skewX(-25deg) translateX(600%)}}
+@media(min-width:720px) and (max-width:1600px){.hero-centered{padding-left:5.5vw;padding-right:5.5vw}.hero-centered h1{width:100%;max-width:1120px}.hero-centered h1 span{width:auto;min-width:0;max-width:none;white-space:normal!important;font-size:inherit!important;letter-spacing:inherit}}
+@media(max-width:719px){.hero-centered{min-height:100svh;padding:110px 6vw 66px}.hero-centered h1{margin-top:25px;font-size:clamp(40px,10.8vw,58px);line-height:1.02}.hero-centered .hero-description{margin-top:24px;font-size:15px}.hero-centered .hero-cta{min-width:0;width:100%;max-width:340px;min-height:54px;margin-top:27px}.hero-pillars{margin-top:46px}.hero-pillars h2{padding:14px 5px 0;font-size:10px;line-height:1.25}.hero-centered .hero-bottom{left:6vw;right:6vw;bottom:18px}}
+@media(prefers-reduced-motion:reduce){.shine-cta::before{animation:none;display:none}.hero-centered .hero-cta,.hero-centered .hero-cta .ui-icon{transition:none}}

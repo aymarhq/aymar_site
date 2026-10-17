@@ -23,7 +23,7 @@ export type Dict = {
   metadata: { title: string; description: string };
   loader: string;
   nav: { studio: string; work: string; process: string; how: string; contact: string; cta: string; menu: string };
-  hero: { eyebrow: string; title: string; emphasis: string; paragraph: string; cta: string; location: string };
+  hero: { eyebrow: string; title: string; emphasis: string; paragraph: string; cta: string; pillars: string[]; location: string };
   marquee: { first: string; second: string };
   studio: { eyebrow: string; title: string; emphasis: string; paragraph: string };
   work: { eyebrow: string; editorialBefore: string; editorialLink: string; editorialAfter: string; hover: string; preview: string };
@@ -49,7 +49,7 @@ export const pt: Dict = {
   metadata: { title: 'Aymar Labs — criativos e ofertas que vendem', description: 'A operação criativa por trás de ofertas que vendem no WhatsApp.' },
   loader: 'carregando oferta',
   nav: { studio: 'vídeos', work: 'sites', process: 'entrega', how: 'como funciona', contact: 'contato', cta: 'vamos conversar', menu: 'menu' },
-  hero: { eyebrow: 'aymar labs · operação criativa para ofertas low ticket', title: 'Sua oferta no ar.', emphasis: 'Do criativo à venda.', paragraph: 'A Aymar Labs cria os vídeos, a copy, as páginas, os e-books e os fluxos que sua oferta precisa para sair do papel, gerar conversa e vender no 1:1.', cta: 'quero colocar minha oferta no ar', location: 'Brasil · operação LATAM' },
+  hero: { eyebrow: 'aymar labs · criatividade com direção', title: 'Seu anúncio é só o começo.', emphasis: 'Faça o resto acompanhar.', paragraph: 'Copy, vídeos, páginas e WhatsApp no mesmo caminho. Da primeira impressão à conversa de venda, cada peça tem um papel.', cta: 'quero montar minha oferta', pillars: ['copy e roteiro', 'criativos em vídeo', 'páginas e WhatsApp'], location: 'Brasil · operação LATAM' },
   marquee: { first: 'criativos que param o scroll ✳ copy que conduz à compra ✳ ofertas low ticket ✳ páginas e e-books ✳ fluxos de WhatsApp ✳', second: 'da atenção à conversa ✳ da conversa à venda ✳' },
   studio: { eyebrow: 'o que eu faço', title: 'Não entrego só um vídeo.', emphasis: 'Monto o caminho da venda.', paragraph: 'A Aymar junta estratégia, copy e criação para transformar uma ideia em uma oferta pronta para vender. Do hook do anúncio ao fluxo de chatbot no WhatsApp, cada peça trabalha para a próxima.' },
   work: { eyebrow: 'páginas e ofertas com a PKG', editorialBefore: 'Páginas de vendas, campanhas e ofertas feitas para apresentar melhor o produto e aumentar a intenção de compra, em parceria com a ', editorialLink: 'Agência PKG', editorialAfter: '.', hover: 'Deslize para ver os projetos e toque para abrir.', preview: 'abrir projeto' },
