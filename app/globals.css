@@ -404,3 +404,9 @@ main#top>.studio.copy-benefits{display:block;order:3;min-height:0}
 .videos .proof-strip strong{font-size:clamp(25px,4vw,52px);letter-spacing:-.065em}
 @media(max-width:900px){.benefit-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.benefit-grid article:nth-child(3){padding-left:0;border-left:0;border-top:1px solid var(--paperline)}.benefit-grid article:nth-child(4){border-top:1px solid var(--paperline)}}
 @media(max-width:719px){.copy-benefits .benefits-intro{margin-top:60px}.copy-benefits .benefits-intro>p{padding:0;margin-top:34px;font-size:16px}.benefit-grid{margin-top:55px}.benefit-grid article{padding:20px 12px 25px 0}.benefit-grid article+article{padding-left:12px}.benefit-grid article:nth-child(3){padding-left:0}.benefit-grid h3{font-size:20px}.benefit-grid p{margin-top:13px;font-size:12px}.videos .proof-strip strong{font-size:clamp(16px,5.3vw,24px)}.videos .proof-strip span{white-space:normal;line-height:1.35}}
+
+/* Keep the copyright in its own row, with room for every footer column. */
+.footer{min-height:300px;align-content:space-between;row-gap:52px;padding-top:72px;padding-bottom:42px}
+.footer small{position:static;grid-column:1/-1;margin:0;padding-top:22px;border-top:1px solid var(--line);line-height:1.5}
+@media(max-width:900px){.footer{min-height:330px}.footer small{margin:0}}
+@media(max-width:720px){.footer{min-height:480px;row-gap:34px;padding:58px 6vw 38px}.footer small{grid-column:1/-1;margin:0;padding-top:22px;line-height:1.6}}
