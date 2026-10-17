@@ -46,6 +46,16 @@ function Header({ dict, menuOpen, setMenuOpen }: { dict: Dict; menuOpen: boolean
 
 function FullscreenMenu({ dict, open, setOpen }: { dict: Dict; open: boolean; setOpen: (open: boolean) => void }) {
   const [theme, setTheme] = useState<'dark' | 'light'>('dark');
+  const [activeVideo, setActiveVideo] = useState<{ source: string; title: string } | null>(null);
+  const videoTrigger = useRef<HTMLButtonElement | null>(null);
+  const playerClose = useRef<HTMLButtonElement | null>(null);
+  const menuVideos = [
+    { source: '/videos/c_ctv9_UGC3.mp4', poster: '/videos/c_ctv9_UGC3.jpg', title: 'Criativo UGC' },
+    { source: '/videos/ctv1_2.mp4', poster: '/videos/ctv1_2.jpg', title: 'Prova e desejo' },
+    { source: '/videos/e_a2.mp4', poster: '/videos/e_a2.jpg', title: 'Hook de campanha' },
+    { source: '/videos/A1_Model.mp4', poster: '/videos/A1_Model.jpg', title: 'Variação para anúncio' },
+  ];
+  const menuSites = [projectInfo[5], projectInfo[1], projectInfo[6], projectInfo[3], projectInfo[0]];
   const links = [
     { href: '#videos', label: dict.nav.studio },
     { href: '#trabalhos', label: dict.nav.work },
@@ -62,6 +72,11 @@ function FullscreenMenu({ dict, open, setOpen }: { dict: Dict; open: boolean; se
     }
     return () => document.body.classList.remove('fullscreen-nav-open');
   }, [open]);
+  useEffect(() => { if (activeVideo) playerClose.current?.focus(); }, [activeVideo]);
+  const closeVideo = () => {
+    setActiveVideo(null);
+    window.requestAnimationFrame(() => videoTrigger.current?.focus());
+  };
   const toggleTheme = () => {
     const next = document.documentElement.dataset.theme === 'light' ? 'dark' : 'light';
     document.documentElement.dataset.theme = next;
@@ -70,28 +85,27 @@ function FullscreenMenu({ dict, open, setOpen }: { dict: Dict; open: boolean; se
   };
   const onMenuKeyDown = (event: KeyboardEvent<HTMLElement>) => {
     if (event.key === 'Escape') {
+      if (activeVideo) { event.stopPropagation(); closeVideo(); return; }
       setOpen(false);
       window.requestAnimationFrame(() => document.querySelector<HTMLButtonElement>('.header-menu-toggle')?.focus());
     }
     if (event.key !== 'Tab') return;
-    const controls = Array.from(event.currentTarget.querySelectorAll<HTMLElement>('a, button'));
+    const controls = Array.from(event.currentTarget.querySelectorAll<HTMLElement>(activeVideo ? '.site-menu-player button, .site-menu-player video' : 'a, button'));
     const first = controls[0];
     const last = controls[controls.length - 1];
     if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last?.focus(); }
     else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first?.focus(); }
   };
   return <AnimatePresence>{open && <motion.nav id="site-menu" className="site-menu-overlay" aria-label={dict.nav.menu} onKeyDown={onMenuKeyDown} initial={{ opacity: 0, y: -18 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -18 }} transition={{ duration: .3, ease: 'easeOut' }}>
-    <div className="site-menu-gallery" aria-hidden="true">
-      <div className="site-menu-video-row">
-        {[
-          { source: '/videos/c_ctv9_UGC3.mp4', poster: '/videos/c_ctv9_UGC3.jpg' },
-          { source: '/videos/ctv1_2.mp4', poster: '/videos/ctv1_2.jpg' },
-        ].map(({ source, poster }) => <div className="site-menu-video" key={source}><video autoPlay muted loop playsInline preload="metadata" poster={poster}><source src={source} type="video/mp4" /></video></div>)}
+    <div className="site-menu-gallery" aria-label={dict.lang === 'pt' ? 'Amostra de vídeos e sites' : 'Video and website showcase'}>
+      <div className="site-menu-media-column" aria-label={dict.lang === 'pt' ? 'Vídeos; role para ver mais' : 'Videos; scroll for more'} tabIndex={0}>
+        <span className="site-menu-column-title">{dict.lang === 'pt' ? 'Vídeos' : 'Videos'}</span>
+        {menuVideos.map(item => <button className="site-menu-media-card site-menu-video" type="button" key={item.source} aria-label={`${dict.lang === 'pt' ? 'Assistir' : 'Watch'}: ${item.title}`} onClick={event => { videoTrigger.current = event.currentTarget; setActiveVideo({ source: item.source, title: item.title }); }}><Image src={item.poster} alt="" fill sizes="(max-width: 719px) 42vw, 24vw" /><span className="site-menu-card-action" aria-hidden="true">▶</span><span className="site-menu-card-caption">{item.title}</span></button>)}
       </div>
-      <div className="site-menu-site-row">
-        {['/references/mentoria-caio.png', '/references/dra-aline.png'].map(src => <div className="site-menu-site" key={src}><Image src={src} alt="" fill sizes="(max-width: 900px) 22vw, 250px" /></div>)}
+      <div className="site-menu-media-column" aria-label={dict.lang === 'pt' ? 'Sites; role para ver mais' : 'Websites; scroll for more'} tabIndex={0}>
+        <span className="site-menu-column-title">Sites</span>
+        {menuSites.map(item => <a className="site-menu-media-card site-menu-site" href={item.url} target="_blank" rel="noopener noreferrer" key={item.slug} aria-label={`${dict.lang === 'pt' ? 'Abrir site' : 'Open website'}: ${item.slug.replaceAll('-', ' ')}`}><Image src={`/references/${item.slug}.png`} alt="" fill sizes="(max-width: 719px) 42vw, 24vw" /><span className="site-menu-card-action" aria-hidden="true">↗</span><span className="site-menu-card-caption">{item.slug.replaceAll('-', ' ')}</span></a>)}
       </div>
-      <span className="site-menu-gallery-label">Aymar Labs / criativos + sites</span>
     </div>
     <div className="site-menu-content">
       <span className="site-menu-kicker">Aymar Labs — {dict.lang === 'pt' ? 'navegação' : 'navigation'}</span>
@@ -102,6 +116,7 @@ function FullscreenMenu({ dict, open, setOpen }: { dict: Dict; open: boolean; se
         <button type="button" onClick={toggleTheme}>{theme === 'dark' ? 'light' : 'dark'} mode</button>
       </div>
     </div>
+    {activeVideo && <div className="site-menu-player" role="dialog" aria-modal="true" aria-label={activeVideo.title} onClick={event => { if (event.target === event.currentTarget) closeVideo(); }}><div className="site-menu-player-inner"><button ref={playerClose} type="button" className="site-menu-player-close" aria-label={dict.ui.closeMenu} onClick={closeVideo}>×</button><video key={activeVideo.source} src={activeVideo.source} controls autoPlay playsInline tabIndex={0} /></div></div>}
   </motion.nav>}</AnimatePresence>;
 }
 
@@ -111,10 +126,18 @@ function Hero({ dict, whatsappUrl }: { dict: Dict; whatsappUrl: string }) {
       <div className="hero-eyebrow"><i /> {dict.hero.eyebrow}</div>
       <h1><span>{dict.hero.title}</span><em>{dict.hero.emphasis}</em></h1>
       <p className="hero-description">{dict.hero.paragraph}</p>
-      <a className="hero-cta shine-cta" data-cursor="chamar" href={whatsappUrl} target="_blank" rel="noopener noreferrer"><span>{dict.hero.cta}</span><ArrowUpRight /></a>
+      <a className="hero-cta shine-cta" href={whatsappUrl} target="_blank" rel="noopener noreferrer"><span>{dict.hero.cta}</span></a>
       <div className="hero-pillars" aria-label={dict.lang === 'pt' ? 'O que criamos' : 'What we create'}>{dict.hero.pillars.map(pillar => <h2 key={pillar}>{pillar}</h2>)}</div>
     </div>
     <div className="hero-bottom"><span>{dict.hero.location}</span></div>
+  </section>;
+}
+
+function CopyBenefitsSection({ dict }: { dict: Dict }) {
+  return <section id="studio" className="studio copy-benefits paper">
+    <div className="eyebrow">{dict.studio.eyebrow}</div>
+    <div className="two-col benefits-intro"><h2>{dict.studio.title}<br /><em>{dict.studio.emphasis}</em></h2><p>{dict.studio.paragraph}</p></div>
+    <div className="benefit-grid">{dict.studio.benefits.map(item => <article key={item.title}><h3>{item.title}</h3><p>{item.text}</p></article>)}</div>
   </section>;
 }
 
@@ -199,20 +222,20 @@ function VideoCard({ item, index }: { item: typeof videoWorks[number]; index: nu
   </article>;
 }
 
-function VideosSection() {
+function VideosSection({ lang }: { lang: Dict['lang'] }) {
   const carouselRef = useRef<HTMLDivElement>(null);
   const moveCarousel = (direction: number) => carouselRef.current?.scrollBy({ left: direction * (carouselRef.current.clientWidth * .82), behavior: 'smooth' });
-  return <section id="videos" className="videos dark"><div className="eyebrow">veja o que o time entrega</div><div className="videos-intro"><h2>Seu anúncio precisa<br /><em>parar o scroll.</em></h2><p>Vídeos 9:16 com hook, ritmo e mensagem para chamar atenção no Instagram e no Facebook — e levar a pessoa até o WhatsApp.</p></div><div className="video-carousel" ref={carouselRef}><div className="video-wall">{videoWorks.map((item, index) => <VideoCard key={item.source} item={item} index={index} />)}</div></div><div className="video-controls"><button type="button" onClick={() => moveCarousel(-1)} aria-label="Ver vídeos anteriores"><ArrowLeft /></button><small>ARRASTE OU USE AS SETAS</small><button type="button" onClick={() => moveCarousel(1)} aria-label="Ver próximos vídeos"><ArrowRight /></button></div><small className="videos-note">PASSE O MOUSE PARA VER · CLIQUE NO ÍCONE PARA ATIVAR O SOM</small><div className="proof-strip" aria-label="Números da operação Aymar Labs"><div><strong>+2M</strong><span>de reais faturados</span></div><div><strong>LATAM</strong><span>operação internacional</span></div><div><strong>+1000</strong><span>criativos feitos</span></div></div></section>;
+  const copy = lang === 'pt'
+    ? { eyebrow: 'criativos na prática', title: 'O público passa reto', emphasis: 'quando parece tudo igual.', paragraph: 'Cada vídeo começa com uma hipótese: qual abertura faria essa pessoa parar? Depois entram ritmo, argumento e uma chamada que combina com a oferta.', previous: 'Ver vídeos anteriores', next: 'Ver próximos vídeos', controls: 'ARRASTE OU USE AS SETAS', note: 'PASSE O MOUSE PARA VER · CLIQUE NO ÍCONE PARA ATIVAR O SOM', proof: [['Ângulo', 'uma mensagem que vem da oferta'], ['Teste', 'variações com uma hipótese'], ['Conversa', 'continuidade até o WhatsApp']] }
+    : { eyebrow: 'creative in practice', title: 'People keep scrolling', emphasis: 'when it all looks the same.', paragraph: 'Each video starts with a question: what opening would make this person stop? Then come rhythm, argument and a call to action that fits the offer.', previous: 'Previous videos', next: 'Next videos', controls: 'DRAG OR USE THE ARROWS', note: 'HOVER TO PREVIEW · CLICK THE ICON FOR SOUND', proof: [['Angle', 'a message grounded in the offer'], ['Test', 'variations with a hypothesis'], ['Conversation', 'the message carries into WhatsApp']] };
+  return <section id="videos" className="videos dark"><div className="eyebrow">{copy.eyebrow}</div><div className="videos-intro"><h2>{copy.title}<br /><em>{copy.emphasis}</em></h2><p>{copy.paragraph}</p></div><div className="video-carousel" ref={carouselRef}><div className="video-wall">{videoWorks.map((item, index) => <VideoCard key={item.source} item={item} index={index} />)}</div></div><div className="video-controls"><button type="button" onClick={() => moveCarousel(-1)} aria-label={copy.previous}><ArrowLeft /></button><small>{copy.controls}</small><button type="button" onClick={() => moveCarousel(1)} aria-label={copy.next}><ArrowRight /></button></div><small className="videos-note">{copy.note}</small><div className="proof-strip" aria-label={lang === 'pt' ? 'Como criamos' : 'How we create'}>{copy.proof.map(([title, detail]) => <div key={title}><strong>{title}</strong><span>{detail}</span></div>)}</div></section>;
 }
 
 function OfferSection({ dict, whatsappUrl }: { dict: Dict; whatsappUrl: string }) {
-  const steps = [
-    ['01', 'Oferta', 'A gente organiza o que está sendo vendido e por que alguém deveria comprar agora.'],
-    ['02', 'Copy e roteiro', 'A promessa vira texto, ângulo, hook e roteiro para cada variação do criativo.'],
-    ['03', 'Criativos', 'Vídeos 9:16 prontos para Facebook e Instagram, com testes de abertura e mensagem.'],
-    ['04', 'WhatsApp', 'Página, entregável e fluxo de chatbot conectados para transformar atenção em conversa.'],
-  ];
-  return <section id="como" className="how dark offer-flow"><div className="eyebrow">como a oferta vira venda</div><div className="how-intro"><h2>Do primeiro hook<br /><em>até o WhatsApp.</em></h2><p>Uma operação completa para colocar sua oferta no ar: estratégia, mensagem, criativos, entregáveis e fluxo de conversa conectados em um único caminho de compra.</p></div><div className="offer-steps">{steps.map(([number, title, text]) => <article className="offer-step" key={number}><strong>{number}</strong><div><h3>{title}</h3><p>{text}</p></div></article>)}</div><div className="how-closing"><p>Você traz a oferta. O time Aymar Labs monta o caminho para ela vender.</p><a href={whatsappUrl} target="_blank" rel="noopener noreferrer">quero montar minha oferta <ArrowUpRight /></a></div></section>;
+  const copy = dict.lang === 'pt'
+    ? { eyebrow: 'como nasce a campanha', title: 'A oferta primeiro.', emphasis: 'A peça depois.', paragraph: 'Antes de abrir o editor, a gente encontra o argumento. É ele que orienta o vídeo, a página e a conversa.', steps: [['01', 'A oferta', 'O que você vende, para quem e por que alguém escolheria você hoje.'], ['02', 'O ângulo', 'Benefício, objeção e prova viram ideias de anúncio que merecem teste.'], ['03', 'O criativo', 'Roteiro, edição e versões com aberturas diferentes para Facebook e Instagram.'], ['04', 'O caminho', 'Página e WhatsApp continuam a promessa do anúncio. O lead sabe qual é o próximo passo.']], closing: 'Mostre sua oferta e o que já tentou. A gente monta as peças para testar um caminho melhor.', cta: 'quero discutir minha campanha' }
+    : { eyebrow: 'how a campaign takes shape', title: 'The offer first.', emphasis: 'The asset second.', paragraph: 'Before opening the editor, we find the argument. It guides the video, the page and the conversation.', steps: [['01', 'The offer', 'What you sell, to whom and why someone would choose it today.'], ['02', 'The angle', 'Benefits, objections and proof become ad ideas worth testing.'], ['03', 'The creative', 'Scripts, editing and versions with different openings for Facebook and Instagram.'], ['04', 'The path', 'The page and WhatsApp continue the ad’s promise. The lead knows what to do next.']], closing: 'Show us your offer and what you have tried. We build the pieces to test a better path.', cta: 'talk about my campaign' };
+  return <section id="como" className="how dark offer-flow"><div className="eyebrow">{copy.eyebrow}</div><div className="how-intro"><h2>{copy.title}<br /><em>{copy.emphasis}</em></h2><p>{copy.paragraph}</p></div><div className="offer-steps">{copy.steps.map(([number, title, text]) => <article className="offer-step" key={number}><strong>{number}</strong><div><h3>{title}</h3><p>{text}</p></div></article>)}</div><div className="how-closing"><p>{copy.closing}</p><a href={whatsappUrl} target="_blank" rel="noopener noreferrer">{copy.cta} <ArrowUpRight /></a></div></section>;
 }
 
 function BackToTop({ lang }: { lang: Dict['lang'] }) {
@@ -360,5 +383,5 @@ export default function Site({ dict }: { dict: Dict }) {
     });
     return () => ctx.revert();
   }, []);
-  return <><AnimatePresence>{!loaded && <motion.div className="loader" initial={{ y: 0 }} exit={{ y: '-100%' }} transition={{ duration: .45 }}><BrandLogo size="md" label={dict.brand} /><div className="loader-bar"><motion.i initial={{ width: 0 }} animate={{ width: '100%' }} transition={{ duration: .5 }} /></div><span>{dict.loader}</span></motion.div>}</AnimatePresence><Header dict={dict} menuOpen={menuOpen} setMenuOpen={setMenuOpen} /><Cursor label="" /><FullscreenMenu dict={dict} open={menuOpen} setOpen={setMenuOpen} /><BackToTop lang={dict.lang} /><main id="top"><Hero dict={dict} whatsappUrl={whatsappUrl} /><Marquee>{dict.marquee.first}</Marquee><section id="studio" className="studio paper"><div className="eyebrow">{dict.studio.eyebrow}</div><div className="two-col"><h2>{dict.studio.title}<br /><em>{dict.studio.emphasis}</em></h2><p>{dict.studio.paragraph}</p></div></section><section id="trabalhos" className="work dark"><div className="eyebrow">{dict.work.eyebrow}</div><div className="work-layout"><aside className="work-editorial"><p>{dict.work.editorialBefore}<strong>{dict.work.editorialLink}</strong>{dict.work.editorialAfter}</p><small>{dict.work.hover}</small></aside><div className="projects-wall">{projectInfo.map((_, index) => <ProjectCard key={projectInfo[index].slug} index={index} dict={dict} hoverLabel={dict.work.hover} />)}</div></div></section><VideosSection /><section id="processo" className="process paper"><div className="eyebrow">{dict.process.eyebrow}</div><div className="two-col process-layout"><h2>{dict.process.title}<br /><em>{dict.process.emphasis}</em></h2><div className="process-list">{dict.process.items.map((item, index) => <ProcessItem key={item.title} item={item} index={index} />)}</div></div></section><OfferSection dict={dict} whatsappUrl={whatsappUrl} /><Marquee light>{dict.marquee.second}</Marquee><section id="oferta" className="specialist dark offer-proof"><div className="eyebrow">estrutura da entrega</div><div className="specialist-content"><h2>Oferta, copy e fluxo<br /><em>no mesmo caminho.</em></h2><p>Uma entrega completa para quem precisa transformar uma ideia em anúncio, conversa e venda — com páginas, criativos e chatbot trabalhando juntos.</p></div><div className="specialist-proof"><div><strong>9:16</strong><span>criativos verticais</span></div><div><strong>X1</strong><span>venda pelo WhatsApp</span></div><div><strong>01</strong><span>oferta bem amarrada</span></div></div><a className="specialist-cta" data-cursor="chamar" href={whatsappUrl} target="_blank" rel="noopener noreferrer">{dict.specialist.cta} <ArrowRight /></a><span className="specialist-note">{dict.specialist.note}</span></section><section id="contato" className="contact paper"><div className="eyebrow">{dict.contact.eyebrow}</div><div className="contact-content"><h2>{dict.contact.title}<br /><em>{dict.contact.emphasis}</em></h2><div><p>{dict.contact.paragraph}</p><a className="contact-whatsapp shine-cta" data-cursor="chamar" href={WHATSAPP_URL} target="_blank" rel="noopener noreferrer">{dict.contact.whatsapp} <ArrowRight /></a><small className="contact-response">{dict.contact.response}</small></div></div><div className="contact-links"><a href="https://www.instagram.com/aymarlabs/" target="_blank" rel="noopener noreferrer">{dict.contact.instagram} <ArrowUpRight /></a></div></section></main><footer className="footer dark"><BrandLogo size="lg" className="logo-footer" label={dict.brand} /><div><span className="footer-label">{dict.footer.contact}</span><a href={WHATSAPP_URL} target="_blank" rel="noopener noreferrer">WhatsApp</a></div><div><span className="footer-label">{dict.footer.social}</span><a href="https://www.instagram.com/aymarlabs/" target="_blank" rel="noopener noreferrer">instagram</a></div><div><span className="footer-label">{dict.footer.studio}</span><span>{dict.footer.location}</span></div><small>{dict.footer.copy}</small></footer></>;
+  return <><AnimatePresence>{!loaded && <motion.div className="loader" initial={{ y: 0 }} exit={{ y: '-100%' }} transition={{ duration: .45 }}><BrandLogo size="md" label={dict.brand} /><div className="loader-bar"><motion.i initial={{ width: 0 }} animate={{ width: '100%' }} transition={{ duration: .5 }} /></div><span>{dict.loader}</span></motion.div>}</AnimatePresence><Header dict={dict} menuOpen={menuOpen} setMenuOpen={setMenuOpen} /><Cursor label="" /><FullscreenMenu dict={dict} open={menuOpen} setOpen={setMenuOpen} /><BackToTop lang={dict.lang} /><main id="top"><Hero dict={dict} whatsappUrl={whatsappUrl} /><Marquee>{dict.marquee.first}</Marquee><CopyBenefitsSection dict={dict} /><section id="trabalhos" className="work dark"><div className="eyebrow">{dict.work.eyebrow}</div><div className="work-layout"><aside className="work-editorial"><p>{dict.work.editorialBefore}<strong>{dict.work.editorialLink}</strong>{dict.work.editorialAfter}</p><small>{dict.work.hover}</small></aside><div className="projects-wall">{projectInfo.map((_, index) => <ProjectCard key={projectInfo[index].slug} index={index} dict={dict} hoverLabel={dict.work.hover} />)}</div></div></section><VideosSection lang={dict.lang} /><section id="processo" className="process paper"><div className="eyebrow">{dict.process.eyebrow}</div><div className="two-col process-layout"><h2>{dict.process.title}<br /><em>{dict.process.emphasis}</em></h2><div className="process-list">{dict.process.items.map((item, index) => <ProcessItem key={item.title} item={item} index={index} />)}</div></div></section><OfferSection dict={dict} whatsappUrl={whatsappUrl} /><Marquee light>{dict.marquee.second}</Marquee><section id="oferta" className="specialist dark offer-proof"><div className="eyebrow">estrutura da entrega</div><div className="specialist-content"><h2>Oferta, copy e fluxo<br /><em>no mesmo caminho.</em></h2><p>Uma entrega completa para quem precisa transformar uma ideia em anúncio, conversa e venda — com páginas, criativos e chatbot trabalhando juntos.</p></div><div className="specialist-proof"><div><strong>9:16</strong><span>criativos verticais</span></div><div><strong>X1</strong><span>venda pelo WhatsApp</span></div><div><strong>01</strong><span>oferta bem amarrada</span></div></div><a className="specialist-cta" data-cursor="chamar" href={whatsappUrl} target="_blank" rel="noopener noreferrer">{dict.specialist.cta} <ArrowRight /></a><span className="specialist-note">{dict.specialist.note}</span></section><section id="contato" className="contact paper"><div className="eyebrow">{dict.contact.eyebrow}</div><div className="contact-content"><h2>{dict.contact.title}<br /><em>{dict.contact.emphasis}</em></h2><div><p>{dict.contact.paragraph}</p><a className="contact-whatsapp shine-cta" data-cursor="chamar" href={WHATSAPP_URL} target="_blank" rel="noopener noreferrer">{dict.contact.whatsapp} <ArrowRight /></a><small className="contact-response">{dict.contact.response}</small></div></div><div className="contact-links"><a href="https://www.instagram.com/aymarlabs/" target="_blank" rel="noopener noreferrer">{dict.contact.instagram} <ArrowUpRight /></a></div></section></main><footer className="footer dark"><BrandLogo size="lg" className="logo-footer" label={dict.brand} /><div><span className="footer-label">{dict.footer.contact}</span><a href={WHATSAPP_URL} target="_blank" rel="noopener noreferrer">WhatsApp</a></div><div><span className="footer-label">{dict.footer.social}</span><a href="https://www.instagram.com/aymarlabs/" target="_blank" rel="noopener noreferrer">instagram</a></div><div><span className="footer-label">{dict.footer.studio}</span><span>{dict.footer.location}</span></div><small>{dict.footer.copy}</small></footer></>;
 }
