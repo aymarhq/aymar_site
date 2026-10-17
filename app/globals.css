@@ -461,3 +461,7 @@ main#top>.studio.copy-benefits{display:block;order:3;min-height:0}
 
 /* Video cards are clean previews; keep only a light top tint for controls. */
 .video-shade{background:linear-gradient(180deg,rgba(0,0,0,.32),transparent 27%)}
+
+/* Match the video section headline to the site's other section headings. */
+.videos-intro h2{font-size:clamp(42px,5vw,72px);line-height:.95;letter-spacing:-.075em}
+@media(max-width:719px){.videos-intro h2{font-size:12vw;line-height:.95}}
