@@ -8,9 +8,9 @@
   "theme_color": "#0a0a0a",
   "lang": "pt-BR",
   "icons": [{
-    "src": "/favicon.png",
-    "sizes": "2984x2984",
-    "type": "image/png",
-    "purpose": "any maskable"
+    "src": "/favicon.jpg",
+    "sizes": "4320x4320",
+    "type": "image/jpeg",
+    "purpose": "any"
   }]
 }

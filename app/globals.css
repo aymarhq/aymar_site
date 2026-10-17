@@ -447,3 +447,8 @@ main#top>.studio.copy-benefits{display:block;order:3;min-height:0}
 .faq-brand-mark{width:112px;margin-top:-12px;color:var(--ink)}
 .footer>div:last-of-type::after{content:"";display:block;width:50px;height:50px;margin-top:18px;background:url('/brand/aymar-mark.svg') center/contain no-repeat}
 @media(max-width:719px){.hero-brand-mark{left:6vw;bottom:10px;width:42px}.avatar-brand-mark{top:22px;right:20px;width:42px}.faq-heading{margin:58px 0 58px;gap:10px}.faq-heading h2{font-size:clamp(39px,10vw,58px)}.faq-brand-mark{width:64px;margin-top:-6px}.footer>div:last-of-type::after{width:42px;height:42px;margin-top:14px}}
+
+/* Keep the contact CTA and its response note as one centered visual unit. */
+.contact-whatsapp{text-transform:uppercase;text-align:center}
+.contact-response{width:min(100%,460px);text-align:center}
+@media(max-width:519px){.contact-whatsapp{font-size:13px}}
