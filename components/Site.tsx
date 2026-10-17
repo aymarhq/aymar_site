@@ -82,8 +82,16 @@ function FullscreenMenu({ dict, open, setOpen }: { dict: Dict; open: boolean; se
   };
   return <AnimatePresence>{open && <motion.nav id="site-menu" className="site-menu-overlay" aria-label={dict.nav.menu} onKeyDown={onMenuKeyDown} initial={{ opacity: 0, y: -18 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -18 }} transition={{ duration: .3, ease: 'easeOut' }}>
     <div className="site-menu-gallery" aria-hidden="true">
-      {['/references/mentoria-caio.png', '/references/dra-aline.png', '/references/isaque-mota.png', '/references/jessica.png'].map((src, index) => <div className={`site-menu-tile site-menu-tile-${index + 1}`} key={src}><Image src={src} alt="" fill sizes="(max-width: 800px) 100vw, 25vw" /></div>)}
-      <span className="site-menu-gallery-label">Aymar Labs / trabalhos selecionados</span>
+      <div className="site-menu-video-row">
+        {[
+          { source: '/videos/c_ctv9_UGC3.mp4', poster: '/videos/c_ctv9_UGC3.jpg' },
+          { source: '/videos/ctv1_2.mp4', poster: '/videos/ctv1_2.jpg' },
+        ].map(({ source, poster }) => <div className="site-menu-video" key={source}><video autoPlay muted loop playsInline preload="metadata" poster={poster}><source src={source} type="video/mp4" /></video></div>)}
+      </div>
+      <div className="site-menu-site-row">
+        {['/references/mentoria-caio.png', '/references/dra-aline.png'].map(src => <div className="site-menu-site" key={src}><Image src={src} alt="" fill sizes="(max-width: 900px) 22vw, 250px" /></div>)}
+      </div>
+      <span className="site-menu-gallery-label">Aymar Labs / criativos + sites</span>
     </div>
     <div className="site-menu-content">
       <span className="site-menu-kicker">Aymar Labs — {dict.lang === 'pt' ? 'navegação' : 'navigation'}</span>
