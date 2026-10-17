@@ -420,7 +420,7 @@ main#top>.studio.copy-benefits{display:block;order:3;min-height:0}
 .footer{min-height:300px;align-content:space-between;row-gap:52px;padding-top:72px;padding-bottom:42px}
 .footer small{position:static;grid-column:1/-1;margin:0;padding-top:22px;border-top:1px solid var(--line);line-height:1.5}
 @media(max-width:900px){.footer{min-height:330px}.footer small{margin:0}}
-@media(max-width:720px){.footer{min-height:480px;row-gap:34px;padding:58px 6vw 38px}.footer small{grid-column:1/-1;margin:0;padding-top:22px;line-height:1.6}}
+@media(max-width:720px){.footer{min-height:480px;row-gap:34px;padding:58px 6vw 38px}.footer small{grid-column:1/-1;margin:0 auto;padding-top:22px;line-height:1.6;text-align:center}}
 
 /* FAQ follows the final contact invitation. */
 .faq-section{padding:110px 5.5vw 135px;border-top:1px solid var(--paperline)}
