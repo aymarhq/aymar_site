@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import { list } from '@vercel/blob';
 import { portfolioOffers } from '../../lib/portfolio';
-import { portfolioRole, uploadIsConfigured } from '../../lib/portfolio-auth';
+import { portfolioSession, uploadIsConfigured } from '../../lib/portfolio-auth';
 import PortfolioClient, { type StoredVideo } from './portfolio-client';
 import PortfolioLogin from './portfolio-login';
 
@@ -46,9 +46,9 @@ async function getHiddenDriveVideos(): Promise<string[]> {
 }
 
 export default async function PortfolioPage() {
-  const role = await portfolioRole();
-  if (!role) return <PortfolioLogin configured={Boolean(process.env.PORTFOLIO_ADMIN_PASSWORD || process.env.PORTFOLIO_STUDENT_PASSWORD)} />;
+  const session = await portfolioSession();
+  if (!session) return <PortfolioLogin configured={Boolean(process.env.PORTFOLIO_ADMIN_PASSWORD || process.env.PORTFOLIO_STUDENT_PASSWORD)} />;
   const [uploads, hiddenDriveVideos] = await Promise.all([getStoredVideos(), getHiddenDriveVideos()]);
   const offers = portfolioOffers.map((offer) => ({ ...offer, videos: offer.videos.filter(({ id }) => !hiddenDriveVideos.includes(id)) }));
-  return <PortfolioClient offers={offers} uploads={uploads} uploadConfigured={uploadIsConfigured()} initialAdmin={role === 'admin'} />;
+  return <PortfolioClient offers={offers} uploads={uploads} uploadConfigured={uploadIsConfigured()} initialAdmin={session.role === 'admin'} initialUsername={session.username} />;
 }

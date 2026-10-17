@@ -22,7 +22,7 @@ function safeFileName(name: string) {
   return `${base || 'video'}.${extension}`;
 }
 
-export default function PortfolioClient({ offers, uploads, uploadConfigured, initialAdmin }: { offers: PortfolioOffer[]; uploads: StoredVideo[]; uploadConfigured: boolean; initialAdmin: boolean }) {
+export default function PortfolioClient({ offers, uploads, uploadConfigured, initialAdmin, initialUsername }: { offers: PortfolioOffer[]; uploads: StoredVideo[]; uploadConfigured: boolean; initialAdmin: boolean; initialUsername: string }) {
   const router = useRouter();
   const [selected, setSelected] = useState(offers[0].slug);
   const [query, setQuery] = useState('');
@@ -30,6 +30,7 @@ export default function PortfolioClient({ offers, uploads, uploadConfigured, ini
   const [adminOpen, setAdminOpen] = useState(false);
   const [authenticated, setAuthenticated] = useState(initialAdmin);
   const [email, setEmail] = useState('');
+  const [username, setUsername] = useState(initialUsername);
   const [password, setPassword] = useState('');
   const [files, setFiles] = useState<File[]>([]);
   const [uploadOffer, setUploadOffer] = useState(offers[0].slug);
@@ -60,10 +61,10 @@ export default function PortfolioClient({ offers, uploads, uploadConfigured, ini
   async function signIn(event: FormEvent<HTMLFormElement>) {
     event.preventDefault(); setNotice(''); setBusy(true);
     try {
-      const response = await fetch('/api/portfolio/session', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email, password }) });
+      const response = await fetch('/api/portfolio/session', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email, username, password }) });
       const data = await response.json();
       if (!response.ok) throw new Error(data.error || 'Não foi possível entrar.');
-      setAuthenticated(Boolean(data.admin)); setEmail(''); setPassword('');
+      setAuthenticated(Boolean(data.admin)); setEmail(''); setUsername(data.username); setPassword('');
     } catch (error) { setNotice(error instanceof Error ? error.message : 'Não foi possível entrar.'); }
     finally { setBusy(false); }
   }
@@ -115,7 +116,7 @@ export default function PortfolioClient({ offers, uploads, uploadConfigured, ini
     <header className={styles.header}>
       <Link className={styles.brand} href="/" aria-label="Aymar Labs, página inicial">aymar<span>.</span></Link>
       <span className={styles.headerLabel}>Biblioteca de criativos</span>
-      <div className={extras.headerActions}>{authenticated && <button className={styles.adminButton} onClick={() => { setUploadOffer(selected); setNotice(''); setAdminOpen(true); }}>+ Adicionar vídeo</button>}<button className={extras.signOut} onClick={async () => { await fetch('/api/portfolio/session', { method: 'DELETE' }); router.refresh(); }}>Sair</button></div>
+      <div className={extras.headerActions}>{username && <span className={extras.username}>@{username}</span>}{authenticated && <button className={styles.adminButton} onClick={() => { setUploadOffer(selected); setNotice(''); setAdminOpen(true); }}>+ Adicionar vídeo</button>}<button className={extras.signOut} onClick={async () => { await fetch('/api/portfolio/session', { method: 'DELETE' }); router.refresh(); }}>Sair</button></div>
     </header>
 
     <section className={styles.hero}>
@@ -153,7 +154,7 @@ export default function PortfolioClient({ offers, uploads, uploadConfigured, ini
     {active && <div className={styles.overlay} onMouseDown={(event) => { if (event.target === event.currentTarget) setActive(null); }}><div className={styles.playerDialog} role="dialog" aria-modal="true" aria-label={readableName(active.name)}><div className={styles.dialogHead}><div><small>{current.name} / {active.source}</small><strong>{readableName(active.name)}</strong></div><button onClick={() => setActive(null)} aria-label="Fechar vídeo">×</button></div><div className={styles.player}>{active.source === 'Drive' ? <iframe src={active.src} title={readableName(active.name)} allow="autoplay; fullscreen" allowFullScreen /> : <video src={active.src} controls autoPlay playsInline />}</div><a className={styles.externalLink} href={active.external} target="_blank" rel="noopener noreferrer">Abrir arquivo em nova aba ↗</a></div></div>}
 
     {adminOpen && <div className={styles.overlay} onMouseDown={(event) => { if (event.target === event.currentTarget && !busy) setAdminOpen(false); }}><div className={styles.adminDialog} role="dialog" aria-modal="true" aria-label="Adicionar vídeos"><div className={styles.dialogHead}><div><small>ADMINISTRAÇÃO</small><strong>Adicionar vídeos</strong></div><button onClick={() => setAdminOpen(false)} disabled={busy} aria-label="Fechar">×</button></div>
-      {!uploadConfigured ? <p className={styles.adminText}>O envio de arquivos ainda não está conectado ao armazenamento neste ambiente.</p> : !authenticated ? <form onSubmit={signIn} className={styles.form}><p className={styles.adminText}>Entre com seu e-mail e a senha de administração para enviar arquivos.</p><label>E-mail<input type="email" autoComplete="email" value={email} onChange={(event) => setEmail(event.target.value)} required /></label><label>Senha<input type="password" autoComplete="current-password" value={password} onChange={(event) => setPassword(event.target.value)} required /></label><button type="submit" disabled={busy}>{busy ? 'Entrando...' : 'Entrar'}</button></form> : <form onSubmit={sendVideos} className={styles.form}><label>Oferta<select value={uploadOffer} onChange={(event) => setUploadOffer(event.target.value)}>{offers.map((offer) => <option value={offer.slug} key={offer.slug}>{offer.name} · {offer.market}</option>)}</select></label><label>Vídeos<input type="file" accept="video/mp4,video/quicktime,video/webm,video/x-m4v,.m4v" multiple onChange={(event) => setFiles(Array.from(event.target.files ?? []))} /></label><p className={styles.adminText}>MP4, MOV ou WebM. Até 1 GB por arquivo. Os novos vídeos ficam armazenados neste portfólio, separados por oferta.</p>{busy && <div className={styles.progress}><span style={{ width: `${progress}%` }} /></div>}<button type="submit" disabled={busy || !files.length}>{busy ? `Enviando ${progress}%` : `Adicionar ${files.length || ''} ${files.length === 1 ? 'vídeo' : 'vídeos'}`}</button></form>}
+      {!uploadConfigured ? <p className={styles.adminText}>O envio de arquivos ainda não está conectado ao armazenamento neste ambiente.</p> : !authenticated ? <form onSubmit={signIn} className={styles.form}><p className={styles.adminText}>Entre com seu e-mail, username e senha de administração para enviar arquivos.</p><label>E-mail<input type="email" autoComplete="email" value={email} onChange={(event) => setEmail(event.target.value)} required /></label><label>Username<input type="text" autoComplete="nickname" placeholder="ex.: pablo.carmo" pattern="[A-Za-z0-9_.-]{3,24}" title="De 3 a 24 caracteres, sem espaços" value={username} onChange={(event) => setUsername(event.target.value)} required /></label><label>Senha<input type="password" autoComplete="current-password" value={password} onChange={(event) => setPassword(event.target.value)} required /></label><button type="submit" disabled={busy}>{busy ? 'Entrando...' : 'Entrar'}</button></form> : <form onSubmit={sendVideos} className={styles.form}><label>Oferta<select value={uploadOffer} onChange={(event) => setUploadOffer(event.target.value)}>{offers.map((offer) => <option value={offer.slug} key={offer.slug}>{offer.name} · {offer.market}</option>)}</select></label><label>Vídeos<input type="file" accept="video/mp4,video/quicktime,video/webm,video/x-m4v,.m4v" multiple onChange={(event) => setFiles(Array.from(event.target.files ?? []))} /></label><p className={styles.adminText}>MP4, MOV ou WebM. Até 1 GB por arquivo. Os novos vídeos ficam armazenados neste portfólio, separados por oferta.</p>{busy && <div className={styles.progress}><span style={{ width: `${progress}%` }} /></div>}<button type="submit" disabled={busy || !files.length}>{busy ? `Enviando ${progress}%` : `Adicionar ${files.length || ''} ${files.length === 1 ? 'vídeo' : 'vídeos'}`}</button></form>}
       {notice && <p className={styles.notice} role="status">{notice}</p>}
     </div></div>}
   </main>;

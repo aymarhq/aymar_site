@@ -2,3 +2,4 @@
 @media(max-width:760px){.headerActions{gap:10px}.signOut{font-size:9px!important}.loginLayout{display:block;padding:80px 5vw 70px}.loginLayout h1{font-size:clamp(52px,13vw,82px);margin:40px 0 26px}.loginLayout>div>p{font-size:14px}.loginCard{margin-top:65px;padding:22px}}
 .offerNav{scrollbar-width:none}.offerNav::-webkit-scrollbar{display:none}
 .removeVideo{margin-top:8px;padding:6px 0;border:0;background:none;color:#888;cursor:pointer;font:10px 'JetBrains Mono',monospace!important;letter-spacing:.08em;text-transform:uppercase}.removeVideo:hover{color:#ff6b6b}.removeVideo:disabled{opacity:.45;cursor:wait}
+.username{color:#aaa;font:10px 'JetBrains Mono',monospace;letter-spacing:.04em}
