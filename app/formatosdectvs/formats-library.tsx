@@ -66,8 +66,10 @@ export default function FormatsLibrary({ catalog, username }: { catalog: Formats
     <section ref={bonusSection} className={styles.bonuses} aria-labelledby="bonus-title"><span className={styles.sectionLabel}>PARA CONTINUAR CRIANDO</span><h2 id="bonus-title">Os bônus<span>.</span></h2>
       <div className={styles.bonusGrid}>{catalog.bonuses.map((bonus) => {
         const content = <><div className={styles.bonusTop}><span>{bonus.number}</span>{bonus.url && <span aria-hidden="true"><ArrowUpRight /></span>}</div><div className={styles.bonusImage}><Image src={bonus.image} alt="" fill sizes="(max-width: 760px) 45vw, 25vw" /></div><h3>{bonus.title}</h3>{bonus.url && <span className={styles.bonusLink}>ACESSAR BÔNUS <ArrowUpRight /></span>}</>;
-        return bonus.url
-          ? <a href={bonus.url} target="_blank" rel="noopener noreferrer" key={bonus.number} className={styles.bonusCard} data-bonus-number={bonus.number}>{content}</a>
+        return bonus.url?.startsWith('/')
+          ? <Link href={bonus.url} key={bonus.number} className={styles.bonusCard} data-bonus-number={bonus.number}>{content}</Link>
+          : bonus.url
+            ? <a href={bonus.url} target="_blank" rel="noopener noreferrer" key={bonus.number} className={styles.bonusCard} data-bonus-number={bonus.number}>{content}</a>
           : <div key={bonus.number} className={styles.bonusCard} data-bonus-number={bonus.number}>{content}</div>;
       })}</div>
     </section>
