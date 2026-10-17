@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import BrandLogo from '../../components/BrandLogo';
+import { ArrowUpRight } from '../../components/Icon';
 import './membros.css';
 
 export const metadata: Metadata = {
@@ -13,7 +14,7 @@ export default function MembersLayout({ children }: Readonly<{ children: React.R
   return <div className="members-page" id="top">
     <header className="members-header">
       <BrandLogo size="md" href="/" label="Aymar Labs, voltar ao site" />
-      <Link className="members-back" href="/">Voltar ao site <span aria-hidden="true">↗</span></Link>
+      <Link className="members-back" href="/">Voltar ao site <ArrowUpRight /></Link>
     </header>
     <main className="members-main">{children}</main>
     <footer className="members-footer"><span>AYMAR LABS / ÁREA DE MEMBROS</span><span>BRASIL · REMOTO</span></footer>

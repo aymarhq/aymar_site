@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { ArrowUpRight } from '../../../components/Icon';
 
 export const metadata: Metadata = { title: 'Entrar na área de membros — Aymar Labs' };
 
@@ -26,7 +27,7 @@ export default async function MembersLoginPage({ searchParams }: { searchParams:
         <label htmlFor="members-password">Senha</label>
         <input id="members-password" name="password" type="password" autoComplete="current-password" required maxLength={256} />
         {errorMessage && <p className="members-error" role="alert">{errorMessage}</p>}
-        <button type="submit">Entrar <span aria-hidden="true">↗</span></button>
+        <button type="submit">Entrar <ArrowUpRight /></button>
       </form>
       <span className="members-panel-foot">ACESSO PRIVADO · AYMAR LABS</span>
     </section>

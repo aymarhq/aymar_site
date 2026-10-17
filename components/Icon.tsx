@@ -11,6 +11,11 @@ export function ArrowRight(props: IconProps) { return <Icon {...props}><path d="
 export function ArrowLeft(props: IconProps) { return <Icon {...props}><path d="M19 12H5m6 6-6-6 6-6" /></Icon>; }
 export function ArrowDown(props: IconProps) { return <Icon {...props}><path d="M12 5v14M6 13l6 6 6-6" /></Icon>; }
 export function ArrowUp(props: IconProps) { return <Icon {...props}><path d="M12 19V5M6 11l6-6 6 6" /></Icon>; }
+export function Close(props: IconProps) { return <Icon {...props}><path d="M6 6 18 18M18 6 6 18" /></Icon>; }
+export function Play(props: IconProps) { return <Icon {...props}><path d="m9 6 10 6-10 6V6Z" fill="currentColor" stroke="none" /></Icon>; }
+export function MenuLines({ open = false, className = '' }: IconProps & { open?: boolean }) {
+  return <svg className={`ui-icon site-menu-icon ${open ? 'is-open' : ''} ${className}`.trim()} viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"><path d="M4 9h16" /><path d="M4 15h16" /></svg>;
+}
 export function CheckDouble(props: IconProps) { return <Icon {...props}><path d="m2 12 4 4 7-8M9 12l4 4 9-9" /></Icon>; }
 export function VolumeOn(props: IconProps) { return <Icon {...props}><path d="M11 5 6 9H3v6h3l5 4V5Z" /><path d="M15.5 8.5a5 5 0 0 1 0 7" /><path d="M19 5a10 10 0 0 1 0 14" /></Icon>; }
 export function VolumeOff(props: IconProps) { return <Icon {...props}><path d="M11 5 6 9H3v6h3l5 4V5Z" /><path d="m16 9 5 6m0-6-5 6" /></Icon>; }

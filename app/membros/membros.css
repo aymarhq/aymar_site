@@ -1,7 +1,7 @@
 .members-page{min-height:100svh;display:flex;flex-direction:column;background:var(--background);color:var(--foreground)}
 .members-header{height:88px;padding:0 5.5vw;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border)}
 .members-back{font:11px 'JetBrains Mono',monospace;text-transform:uppercase;letter-spacing:.02em;transition:color .2s}
-.members-back span{font-size:16px;margin-left:12px}
+.members-back .ui-icon{width:16px;height:16px;margin-left:12px;vertical-align:middle}
 .members-back:hover{color:var(--accent)}
 .members-main{display:flex;align-items:stretch;flex:1;padding:0 5.5vw}
 .members-grid{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(350px,.85fr);gap:clamp(54px,8vw,140px);align-items:center;width:100%;max-width:1500px;margin:0 auto;padding:90px 0 110px}
@@ -24,7 +24,7 @@
 .members-form input:focus{border-color:var(--accent)}
 .members-form button,.members-logout{display:flex;align-items:center;justify-content:space-between;width:100%;min-height:56px;border:1px solid var(--accent);background:var(--accent);color:#fff;padding:0 17px;font:11px 'JetBrains Mono',monospace;text-transform:uppercase;cursor:pointer;transition:background .2s,color .2s}
 .members-form button:hover,.members-logout:hover{background:transparent;color:var(--accent)}
-.members-form button span,.members-logout span{font-size:21px;font-family:Inter,Arial,sans-serif}
+.members-form button .ui-icon,.members-logout .ui-icon{display:block;width:18px;height:18px;margin:0}
 .members-error{color:#ff8b8b;font-size:13px;line-height:1.4;margin:-9px 0 20px}
 .members-panel-foot{display:block;margin-top:auto;padding-top:30px;color:var(--muted)}
 .members-empty{min-height:520px}

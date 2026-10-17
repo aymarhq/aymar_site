@@ -4,9 +4,9 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { AnimatePresence, motion, useAnimationFrame, useMotionValue, useSpring } from 'framer-motion';
 import gsap from 'gsap';
-import { useEffect, useRef, useState, type CSSProperties, type KeyboardEvent, type MouseEvent as ReactMouseEvent, type PointerEvent as ReactPointerEvent, type ReactNode } from 'react';
+import { useEffect, useRef, useState, type CSSProperties, type KeyboardEvent, type MouseEvent as ReactMouseEvent, type PointerEvent as ReactPointerEvent, type ReactNode, type UIEvent as ReactUIEvent } from 'react';
 import BrandLogo from './BrandLogo';
-import { ArrowLeft, ArrowRight, ArrowUp, ArrowUpRight, CheckDouble, VolumeOff, VolumeOn } from './Icon';
+import { ArrowLeft, ArrowRight, ArrowUp, ArrowUpRight, CheckDouble, Close, MenuLines, Play, VolumeOff, VolumeOn } from './Icon';
 import { WHATSAPP_URL } from '../lib/site';
 import type { Dict } from '../dictionaries/pt';
 
@@ -41,14 +41,16 @@ function Cursor({ label }: { label: string }) {
 function Header({ dict, menuOpen, setMenuOpen }: { dict: Dict; menuOpen: boolean; setMenuOpen: (open: boolean) => void }) {
   const [scrolled, setScrolled] = useState(false); const [hidden, setHidden] = useState(false); const lastScroll = useRef(0);
   useEffect(() => { const onScroll = () => { const current = window.scrollY; const delta = current - lastScroll.current; setScrolled(current > 20); if (menuOpen || current <= 20) setHidden(false); else if (Math.abs(delta) >= 8) setHidden(delta > 0); lastScroll.current = current; }; window.addEventListener('scroll', onScroll, { passive: true }); return () => window.removeEventListener('scroll', onScroll); }, [menuOpen]);
-  return <header className={`header ${scrolled ? 'scrolled' : ''} ${hidden && !menuOpen ? 'header-hidden' : ''} ${menuOpen ? 'menu-active' : ''}`}><BrandLogo size="sm" label={dict.brand} /><button className="header-menu-toggle" type="button" aria-label={menuOpen ? dict.ui.closeMenu : dict.ui.openMenu} aria-expanded={menuOpen} aria-controls="site-menu" onClick={() => setMenuOpen(!menuOpen)}><span className={`site-menu-icon ${menuOpen ? 'is-open' : ''}`} aria-hidden="true"><i /><i /></span></button></header>;
+  return <header className={`header ${scrolled ? 'scrolled' : ''} ${hidden && !menuOpen ? 'header-hidden' : ''} ${menuOpen ? 'menu-active' : ''}`}><BrandLogo size="sm" label={dict.brand} /><button className="header-menu-toggle" type="button" aria-label={menuOpen ? dict.ui.closeMenu : dict.ui.openMenu} aria-expanded={menuOpen} aria-controls="site-menu" onClick={() => setMenuOpen(!menuOpen)}><MenuLines open={menuOpen} /></button></header>;
 }
 
 function FullscreenMenu({ dict, open, setOpen }: { dict: Dict; open: boolean; setOpen: (open: boolean) => void }) {
   const [theme, setTheme] = useState<'dark' | 'light'>('dark');
-  const [activeVideo, setActiveVideo] = useState<{ source: string; title: string } | null>(null);
+  const [activeVideo, setActiveVideo] = useState<{ source: string; poster: string; title: string } | null>(null);
   const videoTrigger = useRef<HTMLButtonElement | null>(null);
   const playerClose = useRef<HTMLButtonElement | null>(null);
+  const videoTrack = useRef<HTMLDivElement | null>(null);
+  const siteTrack = useRef<HTMLDivElement | null>(null);
   const menuVideos = [
     { source: '/videos/c_ctv9_UGC3.mp4', poster: '/videos/c_ctv9_UGC3.jpg', title: 'Criativo UGC' },
     { source: '/videos/ctv1_2.mp4', poster: '/videos/ctv1_2.jpg', title: 'Prova e desejo' },
@@ -73,6 +75,20 @@ function FullscreenMenu({ dict, open, setOpen }: { dict: Dict; open: boolean; se
     return () => document.body.classList.remove('fullscreen-nav-open');
   }, [open]);
   useEffect(() => { if (activeVideo) playerClose.current?.focus(); }, [activeVideo]);
+  useEffect(() => {
+    if (!open) return;
+    const frame = window.requestAnimationFrame(() => {
+      [videoTrack.current, siteTrack.current].forEach(track => { if (track) track.scrollTop = track.scrollHeight / 3; });
+    });
+    return () => window.cancelAnimationFrame(frame);
+  }, [open]);
+  const loopTrack = (event: ReactUIEvent<HTMLDivElement>) => {
+    const track = event.currentTarget;
+    const length = track.scrollHeight / 3;
+    if (!length) return;
+    if (track.scrollTop < length * .5) track.scrollTop += length;
+    else if (track.scrollTop > length * 1.5) track.scrollTop -= length;
+  };
   const closeVideo = () => {
     setActiveVideo(null);
     window.requestAnimationFrame(() => videoTrigger.current?.focus());
@@ -98,13 +114,17 @@ function FullscreenMenu({ dict, open, setOpen }: { dict: Dict; open: boolean; se
   };
   return <AnimatePresence>{open && <motion.nav id="site-menu" className="site-menu-overlay" aria-label={dict.nav.menu} onKeyDown={onMenuKeyDown} initial={{ opacity: 0, y: -18 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -18 }} transition={{ duration: .3, ease: 'easeOut' }}>
     <div className="site-menu-gallery" aria-label={dict.lang === 'pt' ? 'Amostra de vídeos e sites' : 'Video and website showcase'}>
-      <div className="site-menu-media-column" aria-label={dict.lang === 'pt' ? 'Vídeos; role para ver mais' : 'Videos; scroll for more'} tabIndex={0}>
+      <div className="site-menu-media-column">
         <span className="site-menu-column-title">{dict.lang === 'pt' ? 'Vídeos' : 'Videos'}</span>
-        {menuVideos.map(item => <button className="site-menu-media-card site-menu-video" type="button" key={item.source} aria-label={`${dict.lang === 'pt' ? 'Assistir' : 'Watch'}: ${item.title}`} onClick={event => { videoTrigger.current = event.currentTarget; setActiveVideo({ source: item.source, title: item.title }); }}><Image src={item.poster} alt="" fill sizes="(max-width: 719px) 42vw, 24vw" /><span className="site-menu-card-action" aria-hidden="true">▶</span><span className="site-menu-card-caption">{item.title}</span></button>)}
+        <div className="site-menu-media-track" ref={videoTrack} onScroll={loopTrack} aria-label={dict.lang === 'pt' ? 'Vídeos; role para ver mais' : 'Videos; scroll for more'} tabIndex={0}>
+          {[0, 1, 2].flatMap(repeat => menuVideos.map(item => <button className="site-menu-media-card site-menu-video" type="button" key={`${repeat}-${item.source}`} aria-label={`${dict.lang === 'pt' ? 'Assistir' : 'Watch'}: ${item.title}`} onClick={event => { videoTrigger.current = event.currentTarget; setActiveVideo(item); }}><Image src={item.poster} alt="" fill sizes="(max-width: 719px) 42vw, 24vw" /><span className="site-menu-card-action" aria-hidden="true"><Play /></span><span className="site-menu-card-caption">{item.title}</span></button>))}
+        </div>
       </div>
-      <div className="site-menu-media-column" aria-label={dict.lang === 'pt' ? 'Sites; role para ver mais' : 'Websites; scroll for more'} tabIndex={0}>
+      <div className="site-menu-media-column">
         <span className="site-menu-column-title">Sites</span>
-        {menuSites.map(item => <a className="site-menu-media-card site-menu-site" href={item.url} target="_blank" rel="noopener noreferrer" key={item.slug} aria-label={`${dict.lang === 'pt' ? 'Abrir site' : 'Open website'}: ${item.slug.replaceAll('-', ' ')}`}><Image src={`/references/${item.slug}.png`} alt="" fill sizes="(max-width: 719px) 42vw, 24vw" /><span className="site-menu-card-action" aria-hidden="true">↗</span><span className="site-menu-card-caption">{item.slug.replaceAll('-', ' ')}</span></a>)}
+        <div className="site-menu-media-track" ref={siteTrack} onScroll={loopTrack} aria-label={dict.lang === 'pt' ? 'Sites; role para ver mais' : 'Websites; scroll for more'} tabIndex={0}>
+          {[0, 1, 2].flatMap(repeat => menuSites.map(item => <a className="site-menu-media-card site-menu-site" href={item.url} target="_blank" rel="noopener noreferrer" key={`${repeat}-${item.slug}`} aria-label={`${dict.lang === 'pt' ? 'Abrir site' : 'Open website'}: ${item.slug.replaceAll('-', ' ')}`}><Image src={`/references/${item.slug}.png`} alt="" fill sizes="(max-width: 719px) 42vw, 24vw" /><span className="site-menu-card-action" aria-hidden="true"><ArrowUpRight /></span><span className="site-menu-card-caption">{item.slug.replaceAll('-', ' ')}</span></a>))}
+        </div>
       </div>
     </div>
     <div className="site-menu-content">
@@ -116,14 +136,14 @@ function FullscreenMenu({ dict, open, setOpen }: { dict: Dict; open: boolean; se
         <button type="button" onClick={toggleTheme}>{theme === 'dark' ? 'light' : 'dark'} mode</button>
       </div>
     </div>
-    {activeVideo && <div className="site-menu-player" role="dialog" aria-modal="true" aria-label={activeVideo.title} onClick={event => { if (event.target === event.currentTarget) closeVideo(); }}><div className="site-menu-player-inner"><button ref={playerClose} type="button" className="site-menu-player-close" aria-label={dict.ui.closeMenu} onClick={closeVideo}>×</button><video key={activeVideo.source} src={activeVideo.source} controls autoPlay playsInline tabIndex={0} /></div></div>}
+    {activeVideo && <div className="site-menu-player" role="dialog" aria-modal="true" aria-label={activeVideo.title} onClick={event => { if (event.target === event.currentTarget) closeVideo(); }}><div className="site-menu-player-inner"><button ref={playerClose} type="button" className="site-menu-player-close" aria-label={dict.ui.closeMenu} onClick={closeVideo}><Close /></button><video key={activeVideo.source} src={activeVideo.source} poster={activeVideo.poster} controls autoPlay playsInline tabIndex={0} /></div></div>}
   </motion.nav>}</AnimatePresence>;
 }
 
 function Hero({ dict, whatsappUrl }: { dict: Dict; whatsappUrl: string }) {
   return <section className="hero hero-centered dark">
     <div className="hero-content">
-      <div className="hero-eyebrow"><i /> {dict.hero.eyebrow}</div>
+      <div className="hero-eyebrow">{dict.hero.eyebrow}</div>
       <h1><span>{dict.hero.title}</span><em>{dict.hero.emphasis}</em></h1>
       <p className="hero-description">{dict.hero.paragraph}</p>
       <a className="hero-cta shine-cta" href={whatsappUrl} target="_blank" rel="noopener noreferrer"><span>{dict.hero.cta}</span></a>
@@ -138,6 +158,7 @@ function CopyBenefitsSection({ dict }: { dict: Dict }) {
     <div className="eyebrow">{dict.studio.eyebrow}</div>
     <div className="two-col benefits-intro"><h2>{dict.studio.title}<br /><em>{dict.studio.emphasis}</em></h2><p>{dict.studio.paragraph}</p></div>
     <div className="benefit-grid">{dict.studio.benefits.map(item => <article key={item.title}><h3>{item.title}</h3><p>{item.text}</p></article>)}</div>
+    <div className="avatar-callout"><div><span>{dict.studio.avatar.eyebrow}</span><h3>{dict.studio.avatar.title}</h3></div><div><p>{dict.studio.avatar.paragraph}</p><a href="#contato">{dict.studio.avatar.cta}<ArrowUpRight /></a></div></div>
   </section>;
 }
 

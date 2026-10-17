@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { ArrowUpRight } from '../../components/Icon';
 
 export const dynamic = 'force-dynamic';
 export const metadata: Metadata = { title: 'Área de membros — Aymar Labs' };
@@ -17,7 +18,7 @@ export default function MembersHomePage() {
       <div className="members-empty-symbol" aria-hidden="true"><span /></div>
       <h2 id="members-empty-title">Seu espaço está pronto<span>.</span></h2>
       <p className="members-panel-copy">Os conteúdos desta área serão adicionados em breve.</p>
-      <form action="/api/membros/sair" method="post"><button className="members-logout" type="submit">Sair da conta <span aria-hidden="true">↗</span></button></form>
+      <form action="/api/membros/sair" method="post"><button className="members-logout" type="submit">Sair da conta <ArrowUpRight /></button></form>
       <span className="members-panel-foot">ACESSO PRIVADO · AYMAR LABS</span>
     </section>
   </div>;
