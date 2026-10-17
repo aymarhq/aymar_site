@@ -468,7 +468,7 @@ main#top>.studio.copy-benefits{display:block;order:3;min-height:0}
 .hero-centered .hero-content{width:min(100%,1280px)}
 .hero-centered h1{max-width:1280px;font-size:clamp(64px,7.4vw,110px);line-height:.98;letter-spacing:-.075em}
 .hero-centered h1 em{white-space:normal}
-@media(max-width:719px){.hero-centered h1{font-size:clamp(48px,12.5vw,62px);line-height:.97}.hero-centered h1 em{font-size:clamp(30px,8.6vw,38px);line-height:1;letter-spacing:-.07em;white-space:normal}}
+@media(max-width:719px){.hero-centered h1{font-size:clamp(48px,12.5vw,62px);line-height:.97}.hero-centered h1 em{width:100%;max-width:370px;margin:10px auto 0;font-size:clamp(38px,10.5vw,44px);line-height:1;letter-spacing:-.07em;white-space:normal}}
 
 /* Video cards are clean previews; keep only a light top tint for controls. */
 .video-shade{background:linear-gradient(180deg,rgba(0,0,0,.32),transparent 27%)}
@@ -479,12 +479,12 @@ main#top>.studio.copy-benefits{display:block;order:3;min-height:0}
   .videos-intro{margin-top:40px;gap:18px;text-align:center}
   .videos-intro h2{font-size:clamp(34px,10.5vw,44px);line-height:.98;text-align:center}
   .videos-intro h2 br{display:none}
-  .videos-intro h2 em{display:inline}
+  .videos-intro h2 em{display:inline;margin-left:.18em}
   .videos-intro p{max-width:340px;margin-inline:auto;text-align:center}
   #contato .contact-content{margin-top:50px;text-align:center}
   #contato .contact-content>h2{text-align:center}
   #contato .contact-content>h2 br{display:none}
-  #contato .contact-content>h2 em{display:inline}
+  #contato .contact-content>h2 em{display:inline;margin-left:.16em}
   #contato .contact-content>div{width:min(88vw,360px);margin-top:16px}
   #contato .contact-content p{text-align:center}
 }
