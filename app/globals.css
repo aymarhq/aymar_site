@@ -226,10 +226,10 @@ main#top>.marquee:nth-child(2){order:2}
 main#top>.videos{order:3}
 main#top>.work{order:4}
 main#top>.process{order:5}
-main#top>.offer-flow{order:6}
-main#top>.marquee:nth-child(8){order:7}
-main#top>.offer-proof{order:8}
-main#top>.contact{order:9}
+main#top>.marquee-light{order:6}
+main#top>.offer-proof{order:7}
+main#top>.contact{order:8}
+main#top>.faq-section{order:9}
 main#top>.studio{display:none}
 
 .proof-strip{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:0;margin-top:86px;border-top:1px solid var(--border);border-bottom:1px solid var(--border)}
@@ -421,3 +421,29 @@ main#top>.studio.copy-benefits{display:block;order:3;min-height:0}
 .footer small{position:static;grid-column:1/-1;margin:0;padding-top:22px;border-top:1px solid var(--line);line-height:1.5}
 @media(max-width:900px){.footer{min-height:330px}.footer small{margin:0}}
 @media(max-width:720px){.footer{min-height:480px;row-gap:34px;padding:58px 6vw 38px}.footer small{grid-column:1/-1;margin:0;padding-top:22px;line-height:1.6}}
+
+/* FAQ follows the final contact invitation. */
+.faq-section{padding:110px 5.5vw 135px;border-top:1px solid var(--paperline)}
+.faq-section h2{max-width:900px;margin:80px 0 78px;font-size:clamp(48px,6.5vw,94px);line-height:.96;letter-spacing:-.075em}
+.faq-list{max-width:1080px;margin-left:auto;border-bottom:1px solid var(--paperline)}
+.faq-list details{border-top:1px solid var(--paperline)}
+.faq-list summary{display:flex;align-items:center;justify-content:space-between;gap:28px;padding:27px 0;list-style:none;cursor:pointer}
+.faq-list summary::-webkit-details-marker{display:none}
+.faq-list summary span{font-size:clamp(18px,2vw,27px);font-weight:600;letter-spacing:-.045em;line-height:1.2}
+.faq-list summary .ui-icon{flex:none;width:20px;height:20px;margin:0;transition:transform .25s ease}
+.faq-list details[open] summary .ui-icon{transform:rotate(180deg)}
+.faq-list summary:focus-visible{outline:2px solid var(--accent);outline-offset:4px}
+.faq-list p{max-width:700px;padding:0 45px 30px 0;color:#555;font-size:16px;line-height:1.55}
+@media(max-width:719px){.faq-section{padding:82px 6vw 100px}.faq-section h2{margin:58px 0 58px;font-size:clamp(43px,11.5vw,62px)}.faq-list summary{gap:15px;padding:22px 0}.faq-list summary span{font-size:19px}.faq-list summary .ui-icon{width:18px;height:18px}.faq-list p{padding:0 20px 24px 0;font-size:14px}}
+@media(prefers-reduced-motion:reduce){.faq-list summary .ui-icon{transition:none}}
+
+/* The Aymar mark is a brand signature, distinct from action icons. */
+.brand-mark{display:block;flex:none;width:100%;height:auto}
+.hero-brand-mark{position:absolute;left:5.5vw;bottom:16px;width:50px;color:inherit}
+.avatar-callout{position:relative}
+.avatar-brand-mark{position:absolute;top:27px;right:30px;width:60px;color:var(--paper)}
+.faq-heading{display:flex;align-items:flex-start;justify-content:space-between;gap:30px;margin:80px 0 78px}
+.faq-heading h2{margin:0}
+.faq-brand-mark{width:112px;margin-top:-12px;color:var(--ink)}
+.footer>div:last-of-type::after{content:"";display:block;width:50px;height:50px;margin-top:18px;background:url('/brand/aymar-mark.svg') center/contain no-repeat}
+@media(max-width:719px){.hero-brand-mark{left:6vw;bottom:10px;width:42px}.avatar-brand-mark{top:22px;right:20px;width:42px}.faq-heading{margin:58px 0 58px;gap:10px}.faq-heading h2{font-size:clamp(39px,10vw,58px)}.faq-brand-mark{width:64px;margin-top:-6px}.footer>div:last-of-type::after{width:42px;height:42px;margin-top:14px}}
