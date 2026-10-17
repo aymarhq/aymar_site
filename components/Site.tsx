@@ -65,7 +65,6 @@ function FullscreenMenu({ dict, open, setOpen }: { dict: Dict; open: boolean; se
     { href: '#processo', label: dict.nav.process },
     { href: '#contato', label: dict.nav.contact },
     { href: '#faq', label: dict.nav.faq },
-    { href: '/membros', label: dict.lang === 'pt' ? 'membros' : 'members' },
   ];
   useEffect(() => {
     document.body.classList.toggle('fullscreen-nav-open', open);
