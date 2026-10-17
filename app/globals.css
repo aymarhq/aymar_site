@@ -312,3 +312,9 @@ html,body{overflow-x:clip}
 .video-sound .ui-icon{display:block;width:16px;height:16px;margin:0 auto}
 .projects-wall > .project-card .preview-frame{aspect-ratio:1 / 1}
 .marquee-track.scroll-driven{animation:none}
+
+.header-menu-toggle{display:flex;align-items:center;justify-content:center;width:44px;height:44px;margin-left:auto;padding:0;border:0;background:transparent;color:var(--foreground);cursor:pointer}
+.header-menu-toggle:hover{color:var(--accent)}
+.header-menu-toggle:focus-visible{outline:1px solid var(--accent);outline-offset:2px}
+.hero-bottom{justify-content:flex-end}
+.contact-links{margin-top:72px}
