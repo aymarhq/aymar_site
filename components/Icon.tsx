@@ -27,3 +27,12 @@ export function MenuLines({ open = false, className = '' }: IconProps & { open?:
 export function CheckDouble(props: IconProps) { return <Icon {...props}><path d="m2 12 4 4 7-8M9 12l4 4 9-9" /></Icon>; }
 export function VolumeOn(props: IconProps) { return <Icon {...props}><path d="M11 5 6 9H3v6h3l5 4V5Z" /><path d="M15.5 8.5a5 5 0 0 1 0 7" /><path d="M19 5a10 10 0 0 1 0 14" /></Icon>; }
 export function VolumeOff(props: IconProps) { return <Icon {...props}><path d="M11 5 6 9H3v6h3l5 4V5Z" /><path d="m16 9 5 6m0-6-5 6" /></Icon>; }
+export function Upload(props: IconProps) { return <Icon {...props}><path d="M12 16V4m-5 5 5-5 5 5" /><path d="M5 14v5h14v-5" /></Icon>; }
+export function Cloud(props: IconProps) { return <Icon {...props}><path d="M7 18h10a4 4 0 0 0 .7-7.9A6 6 0 0 0 6.2 9 4.5 4.5 0 0 0 7 18Z" /></Icon>; }
+export function Phone(props: IconProps) { return <Icon {...props}><rect x="7" y="2.5" width="10" height="19" rx="2" /><path d="M10 5h4m-3 13.5h2" /></Icon>; }
+export function Key(props: IconProps) { return <Icon {...props}><circle cx="8" cy="12" r="4" /><path d="m12 12 9-9m-4 4 3 3m-6 0 3 3" /></Icon>; }
+export function Download(props: IconProps) { return <Icon {...props}><path d="M12 4v12m-5-5 5 5 5-5" /><path d="M5 20h14" /></Icon>; }
+export function Trash(props: IconProps) { return <Icon {...props}><path d="M4 7h16m-10 4v6m4-6v6M8 7l1-3h6l1 3m2 0-1 14H7L6 7" /></Icon>; }
+export function Eye(props: IconProps) { return <Icon {...props}><path d="M2.5 12s3.5-6 9.5-6 9.5 6 9.5 6-3.5 6-9.5 6-9.5-6-9.5-6Z" /><circle cx="12" cy="12" r="2.5" /></Icon>; }
+export function Plus(props: IconProps) { return <Icon {...props}><path d="M12 5v14M5 12h14" /></Icon>; }
+export function Sparkles(props: IconProps) { return <Icon {...props}><path d="m12 2 1.5 4.5L18 8l-4.5 1.5L12 14l-1.5-4.5L6 8l4.5-1.5L12 2Z" /><path d="m19 14 .8 2.2L22 17l-2.2.8L19 20l-.8-2.2L16 17l2.2-.8L19 14ZM5 15l.7 2.3L8 18l-2.3.7L5 21l-.7-2.3L2 18l2.3-.7L5 15Z" /></Icon>; }
