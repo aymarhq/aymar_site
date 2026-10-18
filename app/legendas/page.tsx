@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import { assemblyAiStatus } from '../../lib/legendas-auth';
+import { deepgramStatus } from '../../lib/legendas-auth';
 import { portfolioSession } from '../../lib/portfolio-auth';
 import LegendasClient from './legendas-client';
 import LegendasLogin from './legendas-login';
@@ -14,6 +14,6 @@ export const metadata: Metadata = {
 export default async function LegendasPage() {
   const session = await portfolioSession();
   if (!session) return <LegendasLogin configured={Boolean(process.env.PORTFOLIO_ADMIN_PASSWORD || process.env.PORTFOLIO_STUDENT_PASSWORD)} />;
-  const assembly = await assemblyAiStatus();
-  return <LegendasClient username={session.username} initialKeyConfigured={assembly.configured} initialKeySource={assembly.source} />;
+  const deepgram = await deepgramStatus();
+  return <LegendasClient username={session.username} initialKeyConfigured={deepgram.configured} />;
 }

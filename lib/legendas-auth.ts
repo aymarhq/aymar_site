@@ -2,7 +2,7 @@ import { createCipheriv, createDecipheriv, createHash, randomBytes } from 'node:
 import { cookies } from 'next/headers';
 import { portfolioSession } from './portfolio-auth';
 
-const COOKIE = 'aymar_assemblyai_key';
+const COOKIE = 'aymar_deepgram_key';
 const WEEK = 7 * 24 * 60 * 60;
 
 function encryptionSecret() {
@@ -40,25 +40,21 @@ function decrypt(value: string) {
   }
 }
 
-export async function assemblyAiKey() {
+export async function deepgramKey() {
   const session = await portfolioSession();
   if (!session) return null;
   const personal = (await cookies()).get(COOKIE)?.value;
-  const decrypted = personal ? decrypt(personal) : null;
-  if (decrypted) return decrypted;
-  return session.role === 'admin' ? process.env.ASSEMBLYAI_API_KEY?.trim() || null : null;
+  return personal ? decrypt(personal) : null;
 }
 
-export async function assemblyAiStatus() {
+export async function deepgramStatus() {
   const session = await portfolioSession();
-  if (!session) return { authenticated: false, configured: false, source: null as 'personal' | 'admin' | null };
+  if (!session) return { authenticated: false, configured: false };
   const personal = (await cookies()).get(COOKIE)?.value;
-  if (personal && decrypt(personal)) return { authenticated: true, configured: true, source: 'personal' as const };
-  if (session.role === 'admin' && process.env.ASSEMBLYAI_API_KEY) return { authenticated: true, configured: true, source: 'admin' as const };
-  return { authenticated: true, configured: false, source: null };
+  return { authenticated: true, configured: Boolean(personal && decrypt(personal)) };
 }
 
-export function assemblyAiCookie(value: string) {
+export function deepgramCookie(value: string) {
   return {
     name: COOKIE,
     value: encrypt(value),
@@ -72,7 +68,7 @@ export function assemblyAiCookie(value: string) {
   };
 }
 
-export const assemblyAiCookieName = COOKIE;
+export const deepgramCookieName = COOKIE;
 
 export function sameOrigin(request: Request) {
   const origin = request.headers.get('origin');
