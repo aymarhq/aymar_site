@@ -12,6 +12,8 @@ type Tab = 'styles' | 'captions' | 'scenes';
 type Word = { text: string; start: number; end: number; confidence?: number };
 type Caption = { id: string; start: number; end: number; text: string; visible: boolean };
 type TranscriptResponse = { id?: string; status?: string; text?: string; words?: Word[]; language_code?: string; error?: string };
+type VideoInfo = { width: number; height: number; duration: number; ratio: string; orientation: string };
+type VideoBox = { left: number; width: number; bottom: number; fontSize: number };
 
 const languages = [
   ['auto', 'Detectar automaticamente'], ['pt', 'Português'], ['en', 'Inglês'], ['es', 'Espanhol'],
@@ -81,9 +83,18 @@ function downloadText(name: string, text: string, type: string) {
   const link = document.createElement('a'); link.href = URL.createObjectURL(new Blob([text], { type })); link.download = name; link.click(); setTimeout(() => URL.revokeObjectURL(link.href), 1000);
 }
 
+function gcd(left: number, right: number): number { return right ? gcd(right, left % right) : left; }
+function describeVideo(width: number, height: number, duration: number): VideoInfo {
+  const divisor = gcd(width, height); const exact = `${Math.round(width / divisor)}:${Math.round(height / divisor)}`; const value = width / height;
+  const known = [[9 / 16, '9:16'], [4 / 5, '4:5'], [1, '1:1'], [5 / 4, '5:4'], [4 / 3, '4:3'], [16 / 9, '16:9']] as const;
+  const closest = known.reduce((best, current) => Math.abs(current[0] - value) < Math.abs(best[0] - value) ? current : best);
+  const ratio = Math.abs(closest[0] - value) < .035 ? closest[1] : exact;
+  return { width, height, duration, ratio, orientation: value < .92 ? 'Vertical' : value > 1.08 ? 'Horizontal' : 'Quadrado' };
+}
+
 export default function LegendasClient({ username, initialKeyConfigured, initialKeySource }: { username: string; initialKeyConfigured: boolean; initialKeySource: 'personal' | 'admin' | null }) {
   const router = useRouter();
-  const fileRef = useRef<HTMLInputElement>(null); const mobileRef = useRef<HTMLInputElement>(null); const videoRef = useRef<HTMLVideoElement>(null);
+  const fileRef = useRef<HTMLInputElement>(null); const mobileRef = useRef<HTMLInputElement>(null); const videoRef = useRef<HTMLVideoElement>(null); const stageRef = useRef<HTMLDivElement>(null);
   const [stage, setStage] = useState<Stage>('upload'); const [tab, setTab] = useState<Tab>('styles');
   const [keyConfigured, setKeyConfigured] = useState(initialKeyConfigured); const [keySource, setKeySource] = useState(initialKeySource); const [showKey, setShowKey] = useState(!initialKeyConfigured);
   const [showDrive, setShowDrive] = useState(false); const [driveUrl, setDriveUrl] = useState(''); const [apiKey, setApiKey] = useState('');
@@ -91,18 +102,34 @@ export default function LegendasClient({ username, initialKeyConfigured, initial
   const [language, setLanguage] = useState('auto'); const [progress, setProgress] = useState(0); const [message, setMessage] = useState('');
   const [captions, setCaptions] = useState<Caption[]>([]); const [selectedStyle, setSelectedStyle] = useState('cove'); const [currentTime, setCurrentTime] = useState(0);
   const [rendering, setRendering] = useState(false); const [renderProgress, setRenderProgress] = useState(0);
+  const [videoInfo, setVideoInfo] = useState<VideoInfo | null>(null); const [videoBox, setVideoBox] = useState<VideoBox | null>(null);
 
   const activeCaption = useMemo(() => captions.find((caption) => caption.visible && currentTime * 1000 >= caption.start && currentTime * 1000 <= caption.end), [captions, currentTime]);
   const scenes = useMemo(() => Array.from({ length: Math.ceil(captions.length / 5) }, (_, index) => captions.slice(index * 5, index * 5 + 5)), [captions]);
 
   useEffect(() => () => { if (previewUrl.startsWith('blob:')) URL.revokeObjectURL(previewUrl); }, [previewUrl]);
+  useEffect(() => {
+    const stageElement = stageRef.current; if (stage !== 'editor' || !stageElement || !videoInfo) return;
+    const update = () => {
+      const stageWidth = stageElement.clientWidth; const stageHeight = stageElement.clientHeight; const videoRatio = videoInfo.width / videoInfo.height; const stageRatio = stageWidth / stageHeight;
+      const width = videoRatio > stageRatio ? stageWidth : stageHeight * videoRatio; const height = videoRatio > stageRatio ? stageWidth / videoRatio : stageHeight;
+      const left = (stageWidth - width) / 2; const top = (stageHeight - height) / 2;
+      setVideoBox({ left: left + width * .055, width: width * .89, bottom: stageHeight - top - height + height * .095, fontSize: Math.max(20, Math.min(64, width * .085)) });
+    };
+    update(); const observer = new ResizeObserver(update); observer.observe(stageElement); return () => observer.disconnect();
+  }, [stage, videoInfo]);
+
+  function readVideoInfo(event: React.SyntheticEvent<HTMLVideoElement>) {
+    const video = event.currentTarget;
+    if (video.videoWidth && video.videoHeight) setVideoInfo(describeVideo(video.videoWidth, video.videoHeight, Number.isFinite(video.duration) ? video.duration : 0));
+  }
 
   function chooseFile(event: ChangeEvent<HTMLInputElement>) {
     const selected = event.target.files?.[0]; if (!selected) return;
     if (!['video/mp4', 'video/quicktime', 'video/webm', 'video/x-m4v'].includes(selected.type)) { setMessage('Use um vídeo MP4, MOV ou WebM.'); return; }
     if (selected.size > 2 * 1024 * 1024 * 1024) { setMessage('O limite é 2 GB por vídeo.'); return; }
     if (previewUrl.startsWith('blob:')) URL.revokeObjectURL(previewUrl);
-    setFile(selected); setPreviewUrl(URL.createObjectURL(selected)); setRemoteUrl(''); setProgress(0); setMessage(''); setStage('ready');
+    setFile(selected); setPreviewUrl(URL.createObjectURL(selected)); setRemoteUrl(''); setVideoInfo(null); setVideoBox(null); setProgress(0); setMessage(''); setStage('ready');
   }
 
   async function connectKey(event: FormEvent<HTMLFormElement>) {
@@ -177,17 +204,34 @@ export default function LegendasClient({ username, initialKeyConfigured, initial
     downloadText(`legendas-${Date.now()}.${format}`, format === 'vtt' ? `WEBVTT\n\n${body}` : body, format === 'vtt' ? 'text/vtt' : 'application/x-subrip');
   }
 
+  async function convertToMp4(input: Blob) {
+    setMessage('Preparando o conversor MP4…'); setRenderProgress(72);
+    const [{ FFmpeg }, { toBlobURL }] = await Promise.all([import('@ffmpeg/ffmpeg'), import('@ffmpeg/util')]);
+    const ffmpeg = new FFmpeg(); const base = 'https://cdn.jsdelivr.net/npm/@ffmpeg/core@0.12.10/dist/umd';
+    ffmpeg.on('progress', ({ progress: conversion }) => setRenderProgress(72 + Math.round(Math.max(0, Math.min(1, conversion)) * 28)));
+    await ffmpeg.load({ coreURL: await toBlobURL(`${base}/ffmpeg-core.js`, 'text/javascript'), wasmURL: await toBlobURL(`${base}/ffmpeg-core.wasm`, 'application/wasm') });
+    const inputName = `legendas-${Date.now()}.webm`; const outputName = `legendas-${Date.now()}.mp4`;
+    try {
+      await ffmpeg.writeFile(inputName, new Uint8Array(await input.arrayBuffer()));
+      const exitCode = await ffmpeg.exec(['-i', inputName, '-c:v', 'libx264', '-preset', 'veryfast', '-crf', '20', '-pix_fmt', 'yuv420p', '-c:a', 'aac', '-b:a', '160k', '-movflags', '+faststart', outputName]);
+      if (exitCode !== 0) throw new Error('O conversor MP4 não concluiu o processamento.');
+      const result = await ffmpeg.readFile(outputName); if (typeof result === 'string') throw new Error('A conversão não retornou um vídeo.');
+      const bytes = new Uint8Array(result); return new Blob([bytes.buffer], { type: 'video/mp4' });
+    } finally { try { await ffmpeg.deleteFile(inputName); await ffmpeg.deleteFile(outputName); } catch { /* arquivo temporário já removido */ } ffmpeg.terminate(); }
+  }
+
   async function exportVideo() {
     const video = videoRef.current; if (!video || !previewUrl) { setMessage('Para exportar o vídeo pronto, selecione o arquivo original neste aparelho.'); return; }
     if (!('MediaRecorder' in window)) { setMessage('Seu navegador não oferece exportação de vídeo. Use Chrome ou Edge.'); return; }
     setRendering(true); setRenderProgress(0); setMessage('Renderizando o vídeo no seu navegador…');
     const savedTime = video.currentTime; const savedMuted = video.muted; const canvas = document.createElement('canvas');
-    canvas.width = video.videoWidth || 1080; canvas.height = video.videoHeight || 1920; const context = canvas.getContext('2d');
+    canvas.width = Math.max(2, Math.floor((video.videoWidth || 1080) / 2) * 2); canvas.height = Math.max(2, Math.floor((video.videoHeight || 1920) / 2) * 2); const context = canvas.getContext('2d');
     if (!context) { setRendering(false); return; }
     const canvasStream = canvas.captureStream(30);
     const capturable = video as HTMLVideoElement & { captureStream?: () => MediaStream; mozCaptureStream?: () => MediaStream };
     const sourceStream = capturable.captureStream?.() || capturable.mozCaptureStream?.(); sourceStream?.getAudioTracks().forEach((track) => canvasStream.addTrack(track));
-    const mimeType = MediaRecorder.isTypeSupported('video/webm;codecs=vp9,opus') ? 'video/webm;codecs=vp9,opus' : 'video/webm';
+    const mimeType = ['video/webm;codecs=vp9,opus', 'video/webm;codecs=vp8,opus', 'video/webm', 'video/mp4;codecs=h264,aac', 'video/mp4'].find((candidate) => MediaRecorder.isTypeSupported(candidate));
+    if (!mimeType) { setRendering(false); setMessage('Este navegador não oferece um formato de gravação compatível. Use Chrome ou Edge.'); return; }
     const recorder = new MediaRecorder(canvasStream, { mimeType, videoBitsPerSecond: 8_000_000 }); const chunks: BlobPart[] = [];
     recorder.ondataavailable = (event) => { if (event.data.size) chunks.push(event.data); };
     const stopped = new Promise<void>((resolve) => { recorder.onstop = () => resolve(); });
@@ -207,18 +251,19 @@ export default function LegendasClient({ username, initialKeyConfigured, initial
         lines.forEach((text, index) => { const y = startY + index * lineHeight; if (look.box) { const metrics = context.measureText(text); context.fillStyle = look.box; context.fillRect(canvas.width / 2 - metrics.width / 2 - 14 * scale, y - 31 * scale, metrics.width + 28 * scale, 62 * scale); } context.lineWidth = Math.max(3, 10 * scale); context.strokeStyle = look.stroke; context.strokeText(text, canvas.width / 2, y); context.fillStyle = look.fill; context.fillText(text, canvas.width / 2, y); });
         context.restore();
       }
-      setRenderProgress(video.duration ? Math.min(100, Math.round(video.currentTime / video.duration * 100)) : 0);
+      setRenderProgress(video.duration ? Math.min(70, Math.round(video.currentTime / video.duration * 70)) : 0);
       if (!video.ended && recorder.state === 'recording') requestAnimationFrame(draw); else if (recorder.state === 'recording') recorder.stop();
     };
     try {
       video.currentTime = 0; video.muted = false; recorder.start(1000); await video.play(); requestAnimationFrame(draw); await stopped;
-      const link = document.createElement('a'); link.href = URL.createObjectURL(new Blob(chunks, { type: 'video/webm' })); link.download = `video-legendado-${Date.now()}.webm`; link.click(); setTimeout(() => URL.revokeObjectURL(link.href), 2000); setMessage('Vídeo legendado exportado.');
-    } catch { if (recorder.state === 'recording') recorder.stop(); setMessage('Não foi possível renderizar este vídeo no navegador.'); }
+      const recorded = new Blob(chunks, { type: mimeType }); const mp4 = mimeType.startsWith('video/mp4') ? recorded : await convertToMp4(recorded);
+      const link = document.createElement('a'); link.href = URL.createObjectURL(mp4); link.download = `video-legendado-${Date.now()}.mp4`; link.click(); setTimeout(() => URL.revokeObjectURL(link.href), 2000); setRenderProgress(100); setMessage('Vídeo MP4 exportado.');
+    } catch (reason) { if (recorder.state === 'recording') recorder.stop(); setMessage(reason instanceof Error ? reason.message : 'Não foi possível renderizar este vídeo no navegador.'); }
     finally { video.currentTime = savedTime; video.muted = savedMuted; setRendering(false); setRenderProgress(0); }
   }
 
   async function signOut() { await fetch('/api/portfolio/session', { method: 'DELETE' }); router.refresh(); }
-  function reset() { setStage('upload'); setFile(null); setRemoteUrl(''); setCaptions([]); setProgress(0); setMessage(''); if (previewUrl.startsWith('blob:')) URL.revokeObjectURL(previewUrl); setPreviewUrl(''); }
+  function reset() { setStage('upload'); setFile(null); setRemoteUrl(''); setCaptions([]); setVideoInfo(null); setVideoBox(null); setProgress(0); setMessage(''); if (previewUrl.startsWith('blob:')) URL.revokeObjectURL(previewUrl); setPreviewUrl(''); }
 
   return <main className={styles.page}>
     <header className={styles.header}><BrandLogo size="sm" className={styles.logo} href="/" /><span className={styles.headerLabel}>Legendas</span><nav className={styles.headerNav}><button onClick={() => setShowKey(true)}><Key /> AssemblyAI</button><span>@{username}</span><button onClick={signOut}>Sair</button></nav></header>
@@ -237,7 +282,8 @@ export default function LegendasClient({ username, initialKeyConfigured, initial
     {(stage === 'ready' || stage === 'transcribing') && <section className={styles.preparePage}>
       <button className={styles.backButton} onClick={reset}><ArrowLeft /> Voltar</button>
       <div className={styles.prepareCard}><div className={styles.prepareTitle}><Sparkles /><h2>Gerar Legendas</h2></div>
-        <div className={styles.previewShell}>{previewUrl ? <video ref={videoRef} src={previewUrl} controls playsInline /> : <div className={styles.drivePreview}><Cloud /><strong>Vídeo do Google Drive</strong><span>A prévia local não está disponível.</span></div>}</div>
+        <div className={styles.previewShell}>{previewUrl ? <><video ref={videoRef} src={previewUrl} controls playsInline onLoadedMetadata={readVideoInfo} />{videoInfo && <span className={styles.aspectBadge}>{videoInfo.orientation} · {videoInfo.ratio} · {videoInfo.width}×{videoInfo.height}</span>}</> : <div className={styles.drivePreview}><Cloud /><strong>Vídeo do Google Drive</strong><span>A prévia local não está disponível.</span></div>}</div>
+        {file && <div className={styles.fileIdentity}><span>{file.name}</span><strong>{videoInfo ? `${videoInfo.orientation} · ${videoInfo.ratio}` : 'Identificando formato…'}</strong></div>}
         {stage === 'transcribing' && <><div className={styles.progress}><i style={{ width: `${progress}%` }} /></div><p className={styles.progressText}>{message}</p></>}
         <label className={styles.languageSelect}><span>Idioma do áudio:</span><select value={language} onChange={(event) => setLanguage(event.target.value)} disabled={stage === 'transcribing'}>{languages.map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select><ChevronDown /></label>
         <button className={styles.generateButton} onClick={startTranscription} disabled={stage === 'transcribing'}><Sparkles /> {stage === 'transcribing' ? 'Gerando legendas…' : 'Gerar Legendas'}</button>
@@ -245,9 +291,9 @@ export default function LegendasClient({ username, initialKeyConfigured, initial
     </section>}
 
     {stage === 'editor' && <section className={styles.editorPage}>
-      <div className={styles.editorTop}><button onClick={reset}><ArrowLeft /> Novo vídeo</button><div><strong>Editor de legendas</strong><span>{captions.length} blocos</span></div><div className={styles.exportActions}><button onClick={() => exportSubtitles('srt')}><Download /> SRT</button><button onClick={() => exportSubtitles('vtt')}><Download /> VTT</button><button className={styles.exportPrimary} onClick={exportVideo} disabled={rendering || !previewUrl}><Download /> {rendering ? `Renderizando ${renderProgress}%` : 'Exportar vídeo'}</button></div></div>
+      <div className={styles.editorTop}><button onClick={reset}><ArrowLeft /> Novo vídeo</button><div><strong>Editor de legendas</strong><span>{captions.length} blocos{videoInfo ? ` · ${videoInfo.orientation} ${videoInfo.ratio}` : ''}</span></div><div className={styles.exportActions}><button onClick={() => exportSubtitles('srt')}><Download /> SRT</button><button onClick={() => exportSubtitles('vtt')}><Download /> VTT</button><button className={styles.exportPrimary} onClick={exportVideo} disabled={rendering || !previewUrl}><Download /> {rendering ? `Processando ${renderProgress}%` : 'Exportar MP4'}</button></div></div>
       <div className={styles.editorGrid}>
-        <div className={styles.videoColumn}><div className={styles.videoStage}>{previewUrl ? <video ref={videoRef} src={previewUrl} controls playsInline onTimeUpdate={(event) => setCurrentTime(event.currentTarget.currentTime)} /> : <div className={styles.drivePreview}><Cloud /><strong>Prévia indisponível</strong><span>Edite o texto e exporte SRT ou VTT.</span></div>}{activeCaption && <div key={activeCaption.id} className={`${styles.captionOverlay} ${styles[`style_${selectedStyle.replaceAll('-', '_')}`] || ''}`}><span>{activeCaption.text}</span></div>}</div><div className={styles.videoMeta}><span>{activeCaption ? `${time(activeCaption.start)} — ${time(activeCaption.end)}` : 'Reproduza o vídeo para visualizar'}</span><span>{selectedStyle.replaceAll('-', ' ')}</span></div></div>
+        <div className={styles.videoColumn}><div ref={stageRef} className={styles.videoStage}>{previewUrl ? <video ref={videoRef} src={previewUrl} controls playsInline onLoadedMetadata={readVideoInfo} onTimeUpdate={(event) => setCurrentTime(event.currentTarget.currentTime)} /> : <div className={styles.drivePreview}><Cloud /><strong>Prévia indisponível</strong><span>Edite o texto e exporte SRT ou VTT.</span></div>}{activeCaption && videoBox && <div key={activeCaption.id} style={{ left: videoBox.left, width: videoBox.width, bottom: videoBox.bottom }} className={`${styles.captionOverlay} ${styles[`style_${selectedStyle.replaceAll('-', '_')}`] || ''}`}><span style={{ fontSize: videoBox.fontSize }}>{activeCaption.text}</span></div>}{videoInfo && <span className={styles.aspectBadge}>{videoInfo.ratio} · {videoInfo.width}×{videoInfo.height}</span>}</div><div className={styles.videoMeta}><span>{activeCaption ? `${time(activeCaption.start)} — ${time(activeCaption.end)}` : 'Reproduza o vídeo para visualizar'}</span><span>{videoInfo ? `${videoInfo.orientation} · ${videoInfo.ratio}` : selectedStyle.replaceAll('-', ' ')}</span></div>{message && <p className={styles.editorMessage}>{message}</p>}</div>
         <aside className={styles.editorPanel}><div className={styles.tabs}><button className={tab === 'styles' ? styles.activeTab : ''} onClick={() => setTab('styles')}>Escolher Estilo</button><button className={tab === 'captions' ? styles.activeTab : ''} onClick={() => setTab('captions')}>Editar Legendas</button><button className={tab === 'scenes' ? styles.activeTab : ''} onClick={() => setTab('scenes')}>Cenas</button></div>
           {tab === 'styles' && <div className={styles.stylesPane}><div className={styles.styleFilters}><span>Todos</span><span>Padrão</span><span>Custom</span></div><div className={styles.styleGrid}>{captionStyles.map(([value, label]) => <button key={value} data-style={value} aria-pressed={selectedStyle === value} onClick={() => setSelectedStyle(value)}><span>{label}</span></button>)}</div></div>}
           {tab === 'captions' && <div className={styles.captionsPane}>{captions.map((caption, index) => <div className={styles.captionBlock} key={caption.id}><span className={styles.captionTime}>{time(caption.start)} — {time(caption.end)}</span><textarea value={caption.text} onChange={(event) => updateCaption(caption.id, { text: event.target.value })} /><div className={styles.captionTools}><button title="Ajustar início" onClick={() => seek(caption.start)}><Settings /></button><button title={caption.visible ? 'Ocultar' : 'Exibir'} onClick={() => updateCaption(caption.id, { visible: !caption.visible })}><Eye /></button><button title="Remover" onClick={() => removeCaption(caption.id)}><Trash /></button></div><button className={styles.addCaption} onClick={() => addCaption(index)} title="Adicionar legenda"><Plus /></button></div>)}</div>}
