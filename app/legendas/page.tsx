@@ -8,7 +8,7 @@ export const dynamic = 'force-dynamic';
 export const metadata: Metadata = {
   title: 'Legendas para Vídeos | Aymar Labs',
   description: 'Transcreva, edite, anime e exporte legendas para seus vídeos.',
-  robots: { index: false, follow: false },
+  robots: { index: false, follow: false, googleBot: { index: false, follow: false } },
 };
 
 export default async function LegendasPage() {

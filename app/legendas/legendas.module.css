@@ -25,3 +25,19 @@
 .styleGrid button span{font-style:normal;text-shadow:none}.styleGrid button[data-style=hormozi] span{font-family:'Montserrat',sans-serif;font-weight:900}.styleGrid button[data-style=hormozi-two] span{font-family:'Montserrat',sans-serif;font-weight:900;color:#fdfa14}.styleGrid button[data-style=beast] span{font-family:'Komika',sans-serif;font-weight:500;color:#f9ea03;text-shadow:0 0 8px #fff}.styleGrid button[data-style=negative] span{font-family:'Instrument Sans',sans-serif;font-weight:700;color:#fff}.styleGrid button[data-style=cove] span{font-family:'Poppins',sans-serif;font-weight:600;text-shadow:0 0 8px #fff}.styleGrid button[data-style=marina] span{font-family:'Instrument Sans',sans-serif;font-weight:600}.styleGrid button[data-style=leon] span{font-family:'Montserrat',sans-serif;font-weight:900;background:#ff5000}.styleGrid button[data-style=laguna] span{font-family:'Inter',sans-serif;font-weight:800}.styleGrid button[data-style=tuba] span{font-family:'Inter',sans-serif;font-weight:700}.styleGrid button[data-style=splitz] span{font-family:'Playfair Display',serif;font-weight:400;font-style:italic;color:#7c4a1e}.styleGrid button[data-style=aria] span{font-family:'Inter',sans-serif;font-weight:700;color:#ffc53d}.styleGrid button[data-style=stack] span{font-family:'Inter',sans-serif;font-weight:800}.styleGrid button[data-style=lume] span{font-family:'Space Grotesk',sans-serif;font-weight:500;font-style:normal;color:#f4c86e}.styleGrid button[data-style=marca] span{font-family:'Bebas Neue',sans-serif;font-weight:400;color:#ffe600;background:none;text-shadow:2px 2px 0 #000}.styleGrid button[data-style=canto] span{font-family:'Cormorant Garamond',serif;font-weight:600;font-style:italic;color:#f5e2c0}.styleGrid button[data-style=silk] span{font-family:'Manrope',sans-serif;font-weight:700;color:#0cc8b0}.styleGrid button[data-style=slash] span{font-family:'Oswald',sans-serif;font-weight:700;color:#ff3cac;text-shadow:2px 2px 0 #000}.styleGrid button[data-style=dense] span{font-family:'Syne',sans-serif;font-weight:800;color:#cdfe07}.styleGrid button[data-style=open] span{font-family:'Nunito',sans-serif;font-weight:800;color:#2dd4bf}.styleGrid button[data-style=vibe] span{font-family:'Plus Jakarta Sans',sans-serif;font-weight:800;color:#00d084}.styleGrid button[data-style=rise] span{font-family:'Outfit',sans-serif;font-weight:700;color:#ffcd29}
 
 @media(max-width:760px){.captionOverlay span,.captionOverlay .captionLine{font-size:inherit}.captionOverlay{max-width:94%}}
+
+/* A moldura visível segue a proporção do arquivo, em vez de criar barras laterais no player. */
+.previewShell{background:transparent;overflow:visible}
+.prepareVideoFrame{position:relative;display:grid;place-items:center;width:min(100%,calc(min(52vh,470px) * var(--video-ratio)));max-height:100%;aspect-ratio:var(--video-ratio);background:#000;overflow:hidden;border:1px solid #292929}
+.prepareVideoFrame video{display:block;width:100%;height:100%;object-fit:fill}
+.videoStage{width:100%;background:transparent;border:0;overflow:hidden}
+.videoColumn{min-height:0}
+.videoFrame{position:relative;width:min(100%,430px);max-width:100%;max-height:100%;aspect-ratio:9 / 16;background:#000;overflow:hidden;border:1px solid #292929}
+.videoStage .videoFrame video{display:block;width:100%;height:100%;max-height:none;object-fit:fill}
+.captionOverlay{transform:translateY(50%);max-width:none}
+.captionOverlay .captionWordGroup{display:contents}
+.captionOverlay .captionLineBreak{display:block;flex:0 0 100%;width:0;height:0;margin:0;padding:0}
+.captionOverlay .captionWord{max-width:100%;overflow-wrap:anywhere;white-space:normal}
+.captionOverlay .stackLayout{line-height:1}
+.captionOverlay .stackSupport{font-size:inherit;line-height:1;white-space:normal}
+@media(max-width:760px){.prepareVideoFrame{width:min(100%,calc(48vh * var(--video-ratio)))}.captionOverlay{max-width:none}}

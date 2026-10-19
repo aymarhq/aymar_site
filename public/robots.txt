@@ -1,4 +1,5 @@
 User-agent: *
 Allow: /
+Disallow: /legendas
 
 Sitemap: https://aymar.com.br/sitemap.xml
