@@ -182,7 +182,6 @@ export default function PromptMotion({ entries }: { entries: MotionEntry[] }) {
     <header className={styles.header}>
       <BrandLogo size="sm" className={styles.logo} href="/" label="Aymar Labs, página inicial" />
       <span className={styles.headerLabel}>Biblioteca de motion</span>
-      <Link className={styles.back} href="/portfoliodectvs">Portfólio de CTVs <ArrowUpRight /></Link>
     </header>
 
     <section className={styles.hero}>
