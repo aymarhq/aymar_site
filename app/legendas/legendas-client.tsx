@@ -10,6 +10,7 @@ import styles from './legendas.module.css';
 type Stage = 'upload' | 'ready' | 'transcribing' | 'editor';
 type Tab = 'styles' | 'captions' | 'scenes';
 type StyleFilter = 'all' | 'standard' | 'custom';
+type CaptionCapitalization = 'uppercase' | 'sentence' | 'lowercase';
 type Word = { text: string; start: number; end: number; confidence?: number; lineBreakAfter?: boolean; sourceIndex?: number };
 type Caption = { id: string; start: number; end: number; text: string; words: Word[]; visible: boolean };
 type TranscriptResponse = { status?: string; text?: string; words?: Word[]; language_code?: string; error?: string };
@@ -211,6 +212,28 @@ function timedWords(caption: Caption): Word[] {
   return tokens.map((text, index) => ({ text, start: caption.start + duration * index / Math.max(1, tokens.length), end: caption.start + duration * (index + 1) / Math.max(1, tokens.length) }));
 }
 
+function formatCaptionWords(words: Word[], capitalization: CaptionCapitalization): Word[] {
+  let capitalizedFirstLetter = false;
+  return words.map((word) => {
+    const lowercase = word.text.toLocaleLowerCase('pt-BR');
+    if (capitalization === 'uppercase') return { ...word, text: word.text.toLocaleUpperCase('pt-BR') };
+    if (capitalization === 'lowercase') return { ...word, text: lowercase };
+    const text = lowercase.replace(/[A-Za-zÀ-ÖØ-öø-ÿ]/, (letter) => {
+      if (capitalizedFirstLetter) return letter;
+      capitalizedFirstLetter = true;
+      return letter.toLocaleUpperCase('pt-BR');
+    });
+    return { ...word, text };
+  });
+}
+
+function formatCaptionText(text: string, capitalization: CaptionCapitalization) {
+  if (capitalization === 'uppercase') return text.toLocaleUpperCase('pt-BR');
+  const lowercase = text.toLocaleLowerCase('pt-BR');
+  if (capitalization === 'lowercase') return lowercase;
+  return lowercase.replace(/[A-Za-zÀ-ÖØ-öø-ÿ]/, (letter) => letter.toLocaleUpperCase('pt-BR'));
+}
+
 function clamp(value: number, min = 0, max = 1) { return Math.min(max, Math.max(min, value)); }
 function lerp(from: number, to: number, progress: number) { return from + (to - from) * clamp(progress); }
 function easeOutQuad(value: number) { const progress = clamp(value); return 1 - (1 - progress) * (1 - progress); }
@@ -288,11 +311,12 @@ function ClipaCaption({ words, activeIndex, preset, now, scale, captionStart, hi
       paddingInline: active && preset.activeBox ? '.12em' : undefined,
       textShadow: active && preset.special === 'stack' ? stackTextShadow(scale) : shadow,
       WebkitTextStroke: preset.fontFamily === 'Komika' ? `${.2 * scale}px ${preset.stroke}` : undefined,
+      textTransform: 'none',
     };
     if (preset.renderMode === 'negative') { style.color = active ? '#111' : '#fff'; style.background = active ? '#fff' : '#111'; style.paddingInline = '.14em'; style.textShadow = 'none'; }
     if (preset.activeBox && active) style.color = '#fff';
-    if (preset.special === 'splitz' && active) { style.color = highlightColor; style.textTransform = 'uppercase'; }
-    return <b key={`${word.start}-${word.sourceIndex ?? index}`} className={styles.captionWord} style={style}>{preset.uppercase ? word.text.toUpperCase() : word.text}</b>;
+    if (preset.special === 'splitz' && active) style.color = highlightColor;
+    return <b key={`${word.start}-${word.sourceIndex ?? index}`} className={styles.captionWord} style={style}>{word.text}</b>;
   };
   const renderWords = (items: Word[], offset = 0, entryStart?: number, originalIndices?: number[]) => items.map((word, index) => <span className={styles.captionWordGroup} key={`${word.start}-${word.sourceIndex ?? index}`}>
     {wordNode(word, originalIndices?.[index] ?? offset + index, undefined, entryStart ?? word.start)}{word.lineBreakAfter && <i className={styles.captionLineBreak} />}
@@ -331,12 +355,12 @@ function ClipaCaption({ words, activeIndex, preset, now, scale, captionStart, hi
   return <span className={styles.captionLine}>{renderWords(words)}</span>;
 }
 
-type CanvasCaptionOptions = { size: number; position: number; highlightWords: boolean; textColor: string; highlightColor: string };
+type CanvasCaptionOptions = { size: number; position: number; highlightWords: boolean; textColor: string; highlightColor: string; capitalization: CaptionCapitalization };
 type CanvasRowWord = { word: Word; index: number };
 type CanvasRow = { items: CanvasRowWord[]; size: number; lineHeight: number; entryStart?: number; kind?: 'stack-big' | 'laguna-big' | 'laguna-context' };
 
 function paintCaptionFrame(context: CanvasRenderingContext2D, caption: Caption, now: number, preset: CaptionPreset, options: CanvasCaptionOptions) {
-  const words = timedWords(caption); if (!words.length) return;
+  const words = formatCaptionWords(timedWords(caption), options.capitalization); if (!words.length) return;
   const scale = context.canvas.width / 1080; const baseSize = options.size * scale; const maxWidth = context.canvas.width * .89;
   const activeIndex = words.findIndex((word) => now >= word.start && now < word.end);
   const indexed = words.map((word, index) => ({ word, index })); const rows: CanvasRow[] = [];
@@ -388,7 +412,7 @@ function paintCaptionFrame(context: CanvasRenderingContext2D, caption: Caption, 
       let color = active ? (options.highlightColor === preset.active ? cycle[(word.sourceIndex ?? index) % cycle.length] : options.highlightColor) : options.textColor;
       if (preset.renderMode === 'negative') color = active ? '#111' : '#fff';
       if (preset.activeBox && active) color = '#fff';
-      const text = preset.uppercase || preset.special === 'splitz' && active ? wordText(word).toUpperCase() : wordText(word);
+      const text = wordText(word);
       context.font = font;
       return { word, index, active, color, font, size, text, width: context.measureText(text).width };
     });
@@ -476,7 +500,7 @@ export default function LegendasClient({ username, initialKeyConfigured }: { use
   const [showDrive, setShowDrive] = useState(false); const [driveUrl, setDriveUrl] = useState(''); const [apiKey, setApiKey] = useState('');
   const [file, setFile] = useState<File | null>(null); const [previewUrl, setPreviewUrl] = useState(''); const [remoteUrl, setRemoteUrl] = useState('');
   const [language, setLanguage] = useState('auto'); const [progress, setProgress] = useState(0); const [message, setMessage] = useState('');
-  const [captions, setCaptions] = useState<Caption[]>([]); const [selectedStyle, setSelectedStyle] = useState('cove'); const [styleFilter, setStyleFilter] = useState<StyleFilter>('all'); const [currentTime, setCurrentTime] = useState(0);
+  const [captions, setCaptions] = useState<Caption[]>([]); const [selectedStyle, setSelectedStyle] = useState('cove'); const [styleFilter, setStyleFilter] = useState<StyleFilter>('all'); const [capitalization, setCapitalization] = useState<CaptionCapitalization>('sentence'); const [currentTime, setCurrentTime] = useState(0);
   const [rendering, setRendering] = useState(false); const [renderProgress, setRenderProgress] = useState(0);
   const [videoInfo, setVideoInfo] = useState<VideoInfo | null>(null); const [videoBox, setVideoBox] = useState<VideoBox | null>(null);
   const [captionPosition, setCaptionPosition] = useState(presets.cove.captionPosition); const [captionSize, setCaptionSize] = useState(presets.cove.fontSize); const [highlightWords, setHighlightWords] = useState(true);
@@ -485,7 +509,7 @@ export default function LegendasClient({ username, initialKeyConfigured }: { use
   const displayCues = useMemo(() => buildDisplayCues(captions, presets[selectedStyle] || presets.cove, selectedStyle, (videoInfo?.duration || 0) * 1000), [captions, selectedStyle, videoInfo?.duration]);
   const activeCue = useMemo(() => displayCues.find((cue) => currentTime * 1000 >= cue.start && currentTime * 1000 < cue.end), [displayCues, currentTime]);
   const activeCaption = activeCue?.caption;
-  const activeWords = useMemo(() => activeCaption ? timedWords(activeCaption) : [], [activeCaption]);
+  const activeWords = useMemo(() => activeCaption ? formatCaptionWords(timedWords(activeCaption), capitalization) : [], [activeCaption, capitalization]);
   const activeWordIndex = useMemo(() => activeWords.findIndex((word) => currentTime * 1000 >= word.start && currentTime * 1000 < word.end), [activeWords, currentTime]);
   const scenes = useMemo(() => Array.from({ length: Math.ceil(captions.length / 5) }, (_, index) => captions.slice(index * 5, index * 5 + 5)), [captions]);
 
@@ -594,7 +618,7 @@ export default function LegendasClient({ username, initialKeyConfigured }: { use
 
   function exportSubtitles(format: 'srt' | 'vtt') {
     const visible = captions.filter((caption) => caption.visible);
-    const body = visible.map((caption, index) => `${index + 1}\n${timestamp(caption.start, format === 'vtt')} --> ${timestamp(caption.end, format === 'vtt')}\n${caption.text}\n`).join('\n');
+    const body = visible.map((caption, index) => `${index + 1}\n${timestamp(caption.start, format === 'vtt')} --> ${timestamp(caption.end, format === 'vtt')}\n${formatCaptionText(caption.text, capitalization)}\n`).join('\n');
     downloadText(`legendas-${Date.now()}.${format}`, format === 'vtt' ? `WEBVTT\n\n${body}` : body, format === 'vtt' ? 'text/vtt' : 'application/x-subrip');
   }
 
@@ -640,7 +664,7 @@ export default function LegendasClient({ username, initialKeyConfigured }: { use
       const now = video.currentTime * 1000; const cue = exportCues.find((item) => now >= item.start && now < item.end);
       if (cue) {
         context.save(); context.globalAlpha = chunkOpacity(selectedStyle, now, cue.start);
-        paintCaptionFrame(context, cue.caption, now, exportPreset, { size: captionSize, position: captionPosition, highlightWords, textColor, highlightColor });
+        paintCaptionFrame(context, cue.caption, now, exportPreset, { size: captionSize, position: captionPosition, highlightWords, textColor, highlightColor, capitalization });
         context.restore();
       }
       setRenderProgress(video.duration ? Math.min(70, Math.round(video.currentTime / video.duration * 70)) : 0);
@@ -701,7 +725,23 @@ export default function LegendasClient({ username, initialKeyConfigured }: { use
           {message && <p className={styles.editorMessage}>{message}</p>}
         </div>
         <aside className={styles.editorPanel}><div className={styles.tabs}><button className={tab === 'styles' ? styles.activeTab : ''} onClick={() => setTab('styles')}>Escolher Estilo</button><button className={tab === 'captions' ? styles.activeTab : ''} onClick={() => setTab('captions')}>Editar Legendas</button><button className={tab === 'scenes' ? styles.activeTab : ''} onClick={() => setTab('scenes')}>Cenas</button></div>
-          {tab === 'styles' && <div className={styles.stylesPane}><div className={styles.styleFilters}>{([['all', 'Todos'], ['standard', 'Padrão'], ['custom', 'Custom']] as const).map(([value, label]) => <button key={value} type="button" aria-pressed={styleFilter === value} onClick={() => setStyleFilter(value)}>{label}</button>)}</div><div className={styles.styleGrid}>{captionStyles.filter(([value]) => styleFilter === 'all' || styleGroups[styleFilter].includes(value)).map(([value, label]) => <button key={value} data-style={value} aria-pressed={selectedStyle === value} onClick={() => selectStyle(value)}><span>{label}</span></button>)}</div><div className={styles.styleControls}><label><span>Posição <strong>{captionPosition}%</strong></span><input type="range" min="18" max="88" value={captionPosition} onChange={(event) => setCaptionPosition(Number(event.target.value))} /></label><label><span>Tamanho <strong>{captionSize}px</strong></span><input type="range" min="30" max="120" step=".25" value={captionSize} onChange={(event) => setCaptionSize(Number(event.target.value))} /></label><label className={styles.colorControl}><span>Cor do texto</span><input type="color" value={textColor} onChange={(event) => setTextColor(event.target.value)} /></label><label className={styles.colorControl}><span>Cor do destaque</span><input type="color" value={highlightColor} onChange={(event) => setHighlightColor(event.target.value)} /></label><label className={styles.toggleControl}><span>Realçar palavras</span><input type="checkbox" checked={highlightWords} onChange={(event) => setHighlightWords(event.target.checked)} /></label></div></div>}
+          {tab === 'styles' && <div className={styles.stylesPane}>
+            <div className={styles.styleFilters}>{([['all', 'Todos'], ['standard', 'Padrão'], ['custom', 'Custom']] as const).map(([value, label]) => <button key={value} type="button" aria-pressed={styleFilter === value} onClick={() => setStyleFilter(value)}>{label}</button>)}</div>
+            <div className={styles.styleGrid}>{captionStyles.filter(([value]) => styleFilter === 'all' || styleGroups[styleFilter].includes(value)).map(([value, label]) => <button key={value} data-style={value} aria-pressed={selectedStyle === value} onClick={() => selectStyle(value)}><span>{label}</span></button>)}</div>
+            <div className={styles.styleControls}>
+              <label><span>Posição <strong>{captionPosition}%</strong></span><input type="range" min="18" max="88" value={captionPosition} onChange={(event) => setCaptionPosition(Number(event.target.value))} /></label>
+              <label><span>Tamanho <strong>{captionSize}px</strong></span><input type="range" min="30" max="120" step=".25" value={captionSize} onChange={(event) => setCaptionSize(Number(event.target.value))} /></label>
+              <label className={styles.colorControl}><span>Cor do texto</span><input type="color" value={textColor} onChange={(event) => setTextColor(event.target.value)} /></label>
+              <label className={styles.colorControl}><span>Cor do destaque</span><input type="color" value={highlightColor} onChange={(event) => setHighlightColor(event.target.value)} /></label>
+              <label className={styles.toggleControl}><span>Realçar palavras</span><input type="checkbox" checked={highlightWords} onChange={(event) => setHighlightWords(event.target.checked)} /></label>
+              <div className={styles.capitalizationControl} role="group" aria-label="Formato das letras da legenda">
+                <span>Formato do texto</span>
+                <div className={styles.capitalizationOptions}>
+                  {([['uppercase', 'MAIÚSCULA'], ['sentence', 'Normal'], ['lowercase', 'minúscula']] as const).map(([value, label]) => <button key={value} type="button" aria-label={value === 'sentence' ? 'Primeira letra maiúscula, restante minúscula' : label} aria-pressed={capitalization === value} onClick={() => setCapitalization(value)}>{label}</button>)}
+                </div>
+              </div>
+            </div>
+          </div>}
           {tab === 'captions' && <div className={styles.captionsPane}>{captions.map((caption, index) => <div className={styles.captionBlock} key={caption.id}><span className={styles.captionTime}>{time(caption.start)} — {time(caption.end)}</span><textarea value={caption.text} onChange={(event) => updateCaption(caption.id, { text: event.target.value })} /><div className={styles.captionTools}><button title="Ajustar início" onClick={() => seek(caption.start)}><Settings /></button><button title={caption.visible ? 'Ocultar' : 'Exibir'} onClick={() => updateCaption(caption.id, { visible: !caption.visible })}><Eye /></button><button title="Remover" onClick={() => removeCaption(caption.id)}><Trash /></button></div><button className={styles.addCaption} onClick={() => addCaption(index)} title="Adicionar legenda"><Plus /></button></div>)}</div>}
           {tab === 'scenes' && <div className={styles.scenesPane}>{scenes.map((scene, index) => <button key={index} onClick={() => seek(scene[0]?.start || 0)}><span>0{index + 1}</span><strong>Cena {index + 1}</strong><small>{scene.map((caption) => caption.text).join(' ').slice(0, 105)}{scene.map((caption) => caption.text).join(' ').length > 105 ? '…' : ''}</small></button>)}</div>}
         </aside>

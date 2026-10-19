@@ -84,3 +84,9 @@
 .styleFilters button:hover{color:#f5f4ef}
 .styleFilters button[aria-pressed=true]{background:#1b1b1b;color:#f5f4ef}
 .styleFilters button:focus-visible{outline:1px solid #0a84ff;outline-offset:3px}
+.capitalizationControl{grid-column:1/-1;display:grid;gap:8px;color:#777;font:9px 'JetBrains Mono',monospace;text-transform:uppercase}
+.capitalizationOptions{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}
+.capitalizationOptions button{min-height:34px;padding:6px;border:1px solid #333;background:#151515;color:#999;font:inherit;cursor:pointer}
+.capitalizationOptions button:hover{border-color:#777;color:#f5f4ef}
+.capitalizationOptions button[aria-pressed=true]{border-color:#0a84ff;background:#0a84ff;color:#080808}
+.capitalizationOptions button:focus-visible{outline:1px solid #f5f4ef;outline-offset:2px}
