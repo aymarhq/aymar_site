@@ -16,6 +16,8 @@ type Caption = { id: string; start: number; end: number; text: string; words: Wo
 type TranscriptResponse = { status?: string; text?: string; words?: Word[]; language_code?: string; error?: string };
 type VideoInfo = { width: number; height: number; duration: number; ratio: string; orientation: string };
 type VideoBox = { frameWidth: number; frameHeight: number; left: number; width: number; bottom: number; scale: number };
+type BatchItemStatus = 'queued' | 'uploading' | 'transcribing' | 'done' | 'error';
+type BatchItem = { id: string; file: File; status: BatchItemStatus; progress: number; captions: Caption[]; error?: string; languageCode?: string };
 
 const languages = [
   ['auto', 'Detectar automaticamente'], ['pt', 'Português'], ['en', 'Inglês'], ['es', 'Espanhol'],
@@ -495,10 +497,12 @@ function describeVideo(width: number, height: number, duration: number): VideoIn
 export default function LegendasClient({ username, initialKeyConfigured }: { username: string; initialKeyConfigured: boolean }) {
   const router = useRouter();
   const fileRef = useRef<HTMLInputElement>(null); const mobileRef = useRef<HTMLInputElement>(null); const videoRef = useRef<HTMLVideoElement>(null); const stageRef = useRef<HTMLDivElement>(null);
+  const ffmpegRef = useRef<import('@ffmpeg/ffmpeg').FFmpeg | null>(null); const ffmpegReadyRef = useRef<Promise<unknown> | null>(null); const ffmpegProgressRef = useRef<(progress: number) => void>(() => {});
   const [stage, setStage] = useState<Stage>('upload'); const [tab, setTab] = useState<Tab>('styles');
   const [keyConfigured, setKeyConfigured] = useState(initialKeyConfigured); const [showKey, setShowKey] = useState(!initialKeyConfigured);
   const [showDrive, setShowDrive] = useState(false); const [driveUrl, setDriveUrl] = useState(''); const [apiKey, setApiKey] = useState('');
   const [file, setFile] = useState<File | null>(null); const [previewUrl, setPreviewUrl] = useState(''); const [remoteUrl, setRemoteUrl] = useState('');
+  const [batchMode, setBatchMode] = useState(false); const [batchItems, setBatchItems] = useState<BatchItem[]>([]); const [activeBatchId, setActiveBatchId] = useState('');
   const [language, setLanguage] = useState('auto'); const [progress, setProgress] = useState(0); const [message, setMessage] = useState('');
   const [captions, setCaptions] = useState<Caption[]>([]); const [selectedStyle, setSelectedStyle] = useState('cove'); const [styleFilter, setStyleFilter] = useState<StyleFilter>('all'); const [capitalization, setCapitalization] = useState<CaptionCapitalization>('sentence'); const [currentTime, setCurrentTime] = useState(0);
   const [rendering, setRendering] = useState(false); const [renderProgress, setRenderProgress] = useState(0);
@@ -512,8 +516,10 @@ export default function LegendasClient({ username, initialKeyConfigured }: { use
   const activeWords = useMemo(() => activeCaption ? formatCaptionWords(timedWords(activeCaption), capitalization) : [], [activeCaption, capitalization]);
   const activeWordIndex = useMemo(() => activeWords.findIndex((word) => currentTime * 1000 >= word.start && currentTime * 1000 < word.end), [activeWords, currentTime]);
   const scenes = useMemo(() => Array.from({ length: Math.ceil(captions.length / 5) }, (_, index) => captions.slice(index * 5, index * 5 + 5)), [captions]);
+  const batchComplete = batchMode && batchItems.length > 0 && batchItems.every((item) => item.status === 'done' || item.status === 'error');
 
   useEffect(() => () => { if (previewUrl.startsWith('blob:')) URL.revokeObjectURL(previewUrl); }, [previewUrl]);
+  useEffect(() => () => { ffmpegRef.current?.terminate(); ffmpegRef.current = null; ffmpegReadyRef.current = null; }, []);
   useEffect(() => {
     let cancelled = false;
     const faces = fontSources.map(([family, weight, fileName, style]) => new FontFace(family, `url(https://r2.clipa.app/fonts/${fileName})`, { weight: String(weight), style }));
@@ -541,11 +547,62 @@ export default function LegendasClient({ username, initialKeyConfigured }: { use
   }
 
   function chooseFile(event: ChangeEvent<HTMLInputElement>) {
-    const selected = event.target.files?.[0]; if (!selected) return;
-    if (!['video/mp4', 'video/quicktime', 'video/webm', 'video/x-m4v'].includes(selected.type)) { setMessage('Use um vídeo MP4, MOV ou WebM.'); return; }
-    if (selected.size > 2 * 1024 * 1024 * 1024) { setMessage('O limite é 2 GB por vídeo.'); return; }
-    if (previewUrl.startsWith('blob:')) URL.revokeObjectURL(previewUrl);
-    setFile(selected); setPreviewUrl(URL.createObjectURL(selected)); setRemoteUrl(''); setVideoInfo(null); setVideoBox(null); setProgress(0); setMessage(''); setStage('ready');
+    const selected = Array.from(event.currentTarget.files || []); event.currentTarget.value = '';
+    if (!selected.length) return;
+    if (selected.length > 5) { setMessage('Selecione no máximo cinco vídeos por lote.'); return; }
+    if (selected.some((item) => !['video/mp4', 'video/quicktime', 'video/webm', 'video/x-m4v'].includes(item.type))) { setMessage('Use vídeos MP4, MOV ou WebM.'); return; }
+    if (selected.some((item) => item.size > 2 * 1024 * 1024 * 1024)) { setMessage('O limite é 2 GB por vídeo.'); return; }
+    const first = selected[0];
+    setBatchMode(selected.length > 1);
+    setBatchItems(selected.length > 1 ? selected.map((batchFile) => ({ id: crypto.randomUUID(), file: batchFile, status: 'queued', progress: 0, captions: [] })) : []);
+    setActiveBatchId(''); setFile(first); setPreviewUrl(URL.createObjectURL(first)); setRemoteUrl(''); setVideoInfo(null); setVideoBox(null); setProgress(0); setMessage(''); setStage('ready');
+  }
+
+  function updateBatchItem(id: string, patch: Partial<BatchItem>) {
+    setBatchItems((current) => current.map((item) => item.id === id ? { ...item, ...patch } : item));
+  }
+
+  async function startBatchTranscription() {
+    if (!keyConfigured) { setShowKey(true); setMessage('Conecte sua chave Deepgram primeiro.'); return; }
+    if (!batchItems.length) return;
+    setStage('transcribing'); setMessage('Preparando o lote…');
+    for (const item of batchItems) {
+      if (item.status === 'done') continue;
+      let temporaryBlobUrl = '';
+      updateBatchItem(item.id, { status: 'uploading', progress: 0, error: undefined });
+      try {
+        const blob = await upload(`legendas/${username}/${Date.now()}-${safeName(item.file.name)}`, item.file, {
+          access: 'public', handleUploadUrl: '/api/legendas/upload', multipart: item.file.size > 100 * 1024 * 1024,
+          onUploadProgress: ({ percentage }) => updateBatchItem(item.id, { progress: Math.round(percentage) }),
+        });
+        temporaryBlobUrl = blob.url;
+        updateBatchItem(item.id, { status: 'transcribing', progress: 100 });
+        setMessage(`Transcrevendo ${item.file.name}…`);
+        const response = await fetch('/api/legendas/transcript', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ audioUrl: blob.url, language }) });
+        const result = await response.json() as TranscriptResponse;
+        if (!response.ok) throw new Error(result.error || 'Não foi possível transcrever este vídeo.');
+        const generated = buildCaptions(Array.isArray(result.words) ? result.words : [], result.text || '', presets[selectedStyle] || presets.cove);
+        if (!generated.length) throw new Error('A Deepgram não encontrou fala neste vídeo.');
+        updateBatchItem(item.id, { status: 'done', captions: generated, languageCode: result.language_code, progress: 100 });
+      } catch (reason) {
+        updateBatchItem(item.id, { status: 'error', error: reason instanceof Error ? reason.message : 'Não foi possível gerar as legendas.' });
+      } finally {
+        if (temporaryBlobUrl) void fetch('/api/legendas/cleanup', { method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ url: temporaryBlobUrl }) });
+      }
+    }
+    setStage('ready');
+    setMessage('Processamento do lote concluído. Abra cada vídeo para revisar e exportar as legendas.');
+  }
+
+  function openBatchItem(item: BatchItem) {
+    if (stage === 'transcribing' || item.status !== 'done') return;
+    setActiveBatchId(item.id); setFile(item.file); setPreviewUrl(URL.createObjectURL(item.file)); setRemoteUrl(''); setCaptions(item.captions);
+    setVideoInfo(null); setVideoBox(null); setCurrentTime(0); setSelectedStyle('cove'); setTab('styles'); setStage('editor'); setMessage('');
+  }
+
+  function returnToBatch() {
+    if (activeBatchId) updateBatchItem(activeBatchId, { captions });
+    setActiveBatchId(''); setStage('ready'); setMessage('');
   }
 
   async function connectKey(event: FormEvent<HTMLFormElement>) {
@@ -560,6 +617,7 @@ export default function LegendasClient({ username, initialKeyConfigured }: { use
   async function disconnectKey() { await fetch('/api/legendas/key', { method: 'DELETE' }); setKeyConfigured(false); setShowKey(true); setMessage('Chave removida desta sessão.'); }
 
   async function startTranscription() {
+    if (batchMode) { await startBatchTranscription(); return; }
     if (!keyConfigured) { setShowKey(true); setMessage('Conecte sua chave Deepgram primeiro.'); return; }
     setStage('transcribing'); setProgress(0); setMessage('Preparando o vídeo…');
     let temporaryBlobUrl = '';
@@ -592,7 +650,7 @@ export default function LegendasClient({ username, initialKeyConfigured }: { use
     const direct = driveDirectUrl(driveUrl);
     if (!direct) { setMessage('Cole um link compartilhável de arquivo do Google Drive.'); return; }
     if (previewUrl.startsWith('blob:')) URL.revokeObjectURL(previewUrl);
-    setFile(null); setPreviewUrl(''); setRemoteUrl(direct); setShowDrive(false); setStage('ready'); setMessage('Link do Drive adicionado. A prévia ficará disponível após usar um arquivo local.');
+    setBatchMode(false); setBatchItems([]); setActiveBatchId(''); setFile(null); setPreviewUrl(''); setRemoteUrl(direct); setShowDrive(false); setStage('ready'); setMessage('Link do Drive adicionado. A prévia ficará disponível após usar um arquivo local.');
   }
 
   function updateCaption(id: string, patch: Partial<Caption>) { setCaptions((current) => current.map((caption) => caption.id === id ? { ...caption, ...patch } : caption)); }
@@ -623,95 +681,155 @@ export default function LegendasClient({ username, initialKeyConfigured }: { use
   }
 
   async function convertToMp4(input: Blob) {
-    setMessage('Preparando o conversor MP4…'); setRenderProgress(72);
+    setMessage('Finalizando o MP4…'); setRenderProgress(90);
     const [{ FFmpeg }, { toBlobURL }] = await Promise.all([import('@ffmpeg/ffmpeg'), import('@ffmpeg/util')]);
-    const ffmpeg = new FFmpeg(); const base = 'https://cdn.jsdelivr.net/npm/@ffmpeg/core@0.12.10/dist/umd';
-    ffmpeg.on('progress', ({ progress: conversion }) => setRenderProgress(72 + Math.round(Math.max(0, Math.min(1, conversion)) * 28)));
-    await ffmpeg.load({ coreURL: await toBlobURL(`${base}/ffmpeg-core.js`, 'text/javascript'), wasmURL: await toBlobURL(`${base}/ffmpeg-core.wasm`, 'application/wasm') });
+    let ffmpeg = ffmpegRef.current;
+    if (!ffmpeg) {
+      ffmpeg = new FFmpeg();
+      ffmpeg.on('progress', ({ progress: conversion }) => ffmpegProgressRef.current(conversion));
+      ffmpegRef.current = ffmpeg;
+      const base = 'https://cdn.jsdelivr.net/npm/@ffmpeg/core@0.12.10/dist/umd';
+      ffmpegReadyRef.current = Promise.all([toBlobURL(`${base}/ffmpeg-core.js`, 'text/javascript'), toBlobURL(`${base}/ffmpeg-core.wasm`, 'application/wasm')])
+        .then(([coreURL, wasmURL]) => ffmpeg!.load({ coreURL, wasmURL }));
+    }
+    const engine = ffmpeg;
+    const ready = ffmpegReadyRef.current;
+    if (!ready) throw new Error('Não foi possível iniciar o conversor MP4.');
+    ffmpegProgressRef.current = (conversion) => setRenderProgress(90 + Math.round(Math.max(0, Math.min(1, conversion)) * 10));
     const inputName = `legendas-${Date.now()}.webm`; const outputName = `legendas-${Date.now()}.mp4`;
     try {
-      await ffmpeg.writeFile(inputName, new Uint8Array(await input.arrayBuffer()));
-      const exitCode = await ffmpeg.exec(['-i', inputName, '-c:v', 'libx264', '-preset', 'veryfast', '-crf', '20', '-pix_fmt', 'yuv420p', '-c:a', 'aac', '-b:a', '160k', '-movflags', '+faststart', outputName]);
+      await ready;
+      await engine.writeFile(inputName, new Uint8Array(await input.arrayBuffer()));
+      const exitCode = await engine.exec(['-i', inputName, '-c:v', 'libx264', '-preset', 'ultrafast', '-crf', '22', '-pix_fmt', 'yuv420p', '-c:a', 'aac', '-b:a', '128k', '-movflags', '+faststart', outputName]);
       if (exitCode !== 0) throw new Error('O conversor MP4 não concluiu o processamento.');
-      const result = await ffmpeg.readFile(outputName); if (typeof result === 'string') throw new Error('A conversão não retornou um vídeo.');
+      const result = await engine.readFile(outputName); if (typeof result === 'string') throw new Error('A conversão não retornou um vídeo.');
       const bytes = new Uint8Array(result); return new Blob([bytes.buffer], { type: 'video/mp4' });
-    } finally { try { await ffmpeg.deleteFile(inputName); await ffmpeg.deleteFile(outputName); } catch { /* arquivo temporário já removido */ } ffmpeg.terminate(); }
+    } catch (reason) {
+      if (!engine.loaded) { engine.terminate(); ffmpegRef.current = null; ffmpegReadyRef.current = null; }
+      throw reason;
+    } finally {
+      if (engine.loaded) { try { await engine.deleteFile(inputName); await engine.deleteFile(outputName); } catch { /* arquivo temporário já removido */ } }
+      ffmpegProgressRef.current = () => {};
+    }
   }
 
   async function exportVideo() {
     const video = videoRef.current; if (!video || !previewUrl) { setMessage('Para exportar o vídeo pronto, selecione o arquivo original neste aparelho.'); return; }
     if (!('MediaRecorder' in window)) { setMessage('Seu navegador não oferece exportação de vídeo. Use Chrome ou Edge.'); return; }
-    setRendering(true); setRenderProgress(0); setMessage('Carregando as fontes e renderizando o vídeo…');
-    const exportPreset = presets[selectedStyle] || presets.cove;
-    const exportCues = buildDisplayCues(captions, exportPreset, selectedStyle, Number.isFinite(video.duration) ? video.duration * 1000 : 0);
-    await Promise.allSettled([
-      document.fonts.load(`${exportPreset.fontWeight} ${captionSize}px "${exportPreset.fontFamily}"`),
-      ...(exportPreset.accentFamily ? [document.fonts.load(`${exportPreset.accentWeight || 400} ${captionSize}px "${exportPreset.accentFamily}"`)] : []),
-    ]);
-    const savedTime = video.currentTime; const savedMuted = video.muted; const canvas = document.createElement('canvas');
-    canvas.width = Math.max(2, Math.floor((video.videoWidth || 1080) / 2) * 2); canvas.height = Math.max(2, Math.floor((video.videoHeight || 1920) / 2) * 2); const context = canvas.getContext('2d');
-    if (!context) { setRendering(false); return; }
-    const canvasStream = canvas.captureStream(30);
-    const capturable = video as HTMLVideoElement & { captureStream?: () => MediaStream; mozCaptureStream?: () => MediaStream };
-    const sourceStream = capturable.captureStream?.() || capturable.mozCaptureStream?.(); sourceStream?.getAudioTracks().forEach((track) => canvasStream.addTrack(track));
-    const mimeType = ['video/webm;codecs=vp9,opus', 'video/webm;codecs=vp8,opus', 'video/webm', 'video/mp4;codecs=h264,aac', 'video/mp4'].find((candidate) => MediaRecorder.isTypeSupported(candidate));
-    if (!mimeType) { setRendering(false); setMessage('Este navegador não oferece um formato de gravação compatível. Use Chrome ou Edge.'); return; }
-    const recorder = new MediaRecorder(canvasStream, { mimeType, videoBitsPerSecond: 8_000_000 }); const chunks: BlobPart[] = [];
-    recorder.ondataavailable = (event) => { if (event.data.size) chunks.push(event.data); };
-    const stopped = new Promise<void>((resolve) => { recorder.onstop = () => resolve(); });
-    const draw = () => {
-      context.fillStyle = '#000'; context.fillRect(0, 0, canvas.width, canvas.height); context.drawImage(video, 0, 0, canvas.width, canvas.height);
-      const now = video.currentTime * 1000; const cue = exportCues.find((item) => now >= item.start && now < item.end);
-      if (cue) {
-        context.save(); context.globalAlpha = chunkOpacity(selectedStyle, now, cue.start);
-        paintCaptionFrame(context, cue.caption, now, exportPreset, { size: captionSize, position: captionPosition, highlightWords, textColor, highlightColor, capitalization });
-        context.restore();
-      }
-      setRenderProgress(video.duration ? Math.min(70, Math.round(video.currentTime / video.duration * 70)) : 0);
-      if (!video.ended && recorder.state === 'recording') requestAnimationFrame(draw); else if (recorder.state === 'recording') recorder.stop();
-    };
+    setRendering(true); setRenderProgress(0); setMessage('Preparando o vídeo para exportação…');
+    const savedTime = video.currentTime; const savedMuted = video.muted; const wasPaused = video.paused;
+    let canvasStream: MediaStream | null = null; let sourceStream: MediaStream | null = null; let recorder: MediaRecorder | null = null;
+    let animationFrame = 0; let endedHandler: (() => void) | null = null;
     try {
-      video.currentTime = 0; video.muted = false; recorder.start(1000); await video.play(); requestAnimationFrame(draw); await stopped;
+      const exportPreset = presets[selectedStyle] || presets.cove;
+      const exportCues = buildDisplayCues(captions, exportPreset, selectedStyle, Number.isFinite(video.duration) ? video.duration * 1000 : 0);
+      await Promise.allSettled([
+        document.fonts.load(`${exportPreset.fontWeight} ${captionSize}px "${exportPreset.fontFamily}"`),
+        ...(exportPreset.accentFamily ? [document.fonts.load(`${exportPreset.accentWeight || 400} ${captionSize}px "${exportPreset.accentFamily}"`)] : []),
+      ]);
+      const canvas = document.createElement('canvas');
+      canvas.width = Math.max(2, Math.floor((video.videoWidth || 1080) / 2) * 2); canvas.height = Math.max(2, Math.floor((video.videoHeight || 1920) / 2) * 2);
+      const context = canvas.getContext('2d'); if (!context) throw new Error('Não foi possível preparar o quadro do vídeo.');
+      if (!canvas.captureStream) throw new Error('Seu navegador não oferece captura do vídeo. Use Chrome ou Edge.');
+      canvasStream = canvas.captureStream(30);
+      const capturable = video as HTMLVideoElement & { captureStream?: () => MediaStream; mozCaptureStream?: () => MediaStream };
+      sourceStream = capturable.captureStream?.() || capturable.mozCaptureStream?.() || null; sourceStream?.getAudioTracks().forEach((track) => canvasStream?.addTrack(track));
+      const mimeType = ['video/mp4;codecs=avc1.42E01E,mp4a.40.2', 'video/mp4;codecs=h264,aac', 'video/mp4', 'video/webm;codecs=vp9,opus', 'video/webm;codecs=vp8,opus', 'video/webm'].find((candidate) => MediaRecorder.isTypeSupported(candidate));
+      if (!mimeType) throw new Error('Este navegador não oferece um formato de gravação compatível. Use Chrome ou Edge.');
+      const pixels = canvas.width * canvas.height;
+      recorder = new MediaRecorder(canvasStream, { mimeType, videoBitsPerSecond: Math.min(18_000_000, Math.max(3_000_000, Math.round(pixels * 30 * .08))), audioBitsPerSecond: 128_000 });
+      const chunks: BlobPart[] = []; recorder.ondataavailable = (event) => { if (event.data.size) chunks.push(event.data); };
+      const recorderStopped = new Promise<void>((resolve, reject) => {
+        recorder!.onstop = () => resolve();
+        recorder!.onerror = (event) => reject((event as Event & { error?: DOMException }).error || new Error('A gravação do vídeo foi interrompida.'));
+      });
+      let cueIndex = 0; let lastPaintedTime = -1; let lastProgress = -1;
+      const stopRecording = () => { if (recorder?.state === 'recording') recorder.stop(); };
+      const drawFrame = () => {
+        const seconds = video.currentTime;
+        if (lastPaintedTime < 0 || seconds - lastPaintedTime >= 1 / 30 || video.ended) {
+          lastPaintedTime = seconds;
+          context.fillStyle = '#000'; context.fillRect(0, 0, canvas.width, canvas.height); context.drawImage(video, 0, 0, canvas.width, canvas.height);
+          const now = seconds * 1000;
+          while (cueIndex < exportCues.length - 1 && now >= exportCues[cueIndex].end) cueIndex++;
+          const cue = exportCues[cueIndex];
+          if (cue && now >= cue.start && now < cue.end) {
+            context.save(); context.globalAlpha = chunkOpacity(selectedStyle, now, cue.start);
+            paintCaptionFrame(context, cue.caption, now, exportPreset, { size: captionSize, position: captionPosition, highlightWords, textColor, highlightColor, capitalization });
+            context.restore();
+          }
+        }
+        const progress = video.duration ? Math.min(90, Math.round(seconds / video.duration * 90)) : 0;
+        if (progress !== lastProgress) { lastProgress = progress; setRenderProgress(progress); }
+        if (!video.ended && !video.paused && recorder?.state === 'recording') animationFrame = requestAnimationFrame(drawFrame);
+        else stopRecording();
+      };
+      endedHandler = stopRecording;
+      video.pause();
+      if (Math.abs(video.currentTime) > .01) await new Promise<void>((resolve, reject) => {
+        const timeout = window.setTimeout(() => { video.removeEventListener('seeked', onSeeked); reject(new Error('Não foi possível voltar ao início do vídeo para exportar.')); }, 10000);
+        const onSeeked = () => { window.clearTimeout(timeout); resolve(); };
+        video.addEventListener('seeked', onSeeked, { once: true }); video.currentTime = 0;
+      }); else video.currentTime = 0;
+      context.fillStyle = '#000'; context.fillRect(0, 0, canvas.width, canvas.height); context.drawImage(video, 0, 0, canvas.width, canvas.height);
+      video.muted = false; setMessage(mimeType.startsWith('video/mp4') ? 'Gravando diretamente em MP4…' : 'Gravando o vídeo; convertendo para MP4 no final…'); recorder.start(1000); await video.play(); video.addEventListener('ended', stopRecording, { once: true }); animationFrame = requestAnimationFrame(drawFrame); await recorderStopped;
       const recorded = new Blob(chunks, { type: mimeType }); const mp4 = mimeType.startsWith('video/mp4') ? recorded : await convertToMp4(recorded);
       const link = document.createElement('a'); link.href = URL.createObjectURL(mp4); link.download = `video-legendado-${Date.now()}.mp4`; link.click(); setTimeout(() => URL.revokeObjectURL(link.href), 2000); setRenderProgress(100); setMessage('Vídeo MP4 exportado.');
-    } catch (reason) { if (recorder.state === 'recording') recorder.stop(); setMessage(reason instanceof Error ? reason.message : 'Não foi possível renderizar este vídeo no navegador.'); }
-    finally { video.currentTime = savedTime; video.muted = savedMuted; setRendering(false); setRenderProgress(0); }
+    } catch (reason) { if (recorder?.state === 'recording') recorder.stop(); setMessage(reason instanceof Error ? reason.message : 'Não foi possível renderizar este vídeo no navegador.'); }
+    finally {
+      cancelAnimationFrame(animationFrame); if (endedHandler) video.removeEventListener('ended', endedHandler); video.pause();
+      canvasStream?.getTracks().forEach((track) => track.stop()); sourceStream?.getTracks().forEach((track) => track.stop());
+      video.currentTime = savedTime; video.muted = savedMuted; if (!wasPaused) void video.play();
+      setRendering(false); setRenderProgress(0);
+    }
   }
 
   async function signOut() { await fetch('/api/portfolio/session', { method: 'DELETE' }); router.refresh(); }
-  function reset() { setStage('upload'); setFile(null); setRemoteUrl(''); setCaptions([]); setVideoInfo(null); setVideoBox(null); setProgress(0); setMessage(''); if (previewUrl.startsWith('blob:')) URL.revokeObjectURL(previewUrl); setPreviewUrl(''); }
+  function reset() { setStage('upload'); setBatchMode(false); setBatchItems([]); setActiveBatchId(''); setFile(null); setRemoteUrl(''); setCaptions([]); setVideoInfo(null); setVideoBox(null); setProgress(0); setMessage(''); if (previewUrl.startsWith('blob:')) URL.revokeObjectURL(previewUrl); setPreviewUrl(''); }
 
   return <main className={styles.page}>
     <header className={styles.header}><BrandLogo size="sm" className={styles.logo} href="/" /><span className={styles.headerLabel}>Legendas</span><nav className={styles.headerNav}><button onClick={() => setShowKey(true)}><Key /> Deepgram</button><span>@{username}</span><button onClick={signOut}>Sair</button></nav></header>
 
     {stage === 'upload' && <section className={styles.uploadPage}>
-      <div className={styles.uploadIntro}><span className={styles.eyebrow}><i /> AYMAR LABS / LEGENDAS</span><h1>Legendas que<br /><em>prendem atenção.</em></h1><p>Envie seu vídeo, transcreva palavra por palavra com Deepgram, escolha um estilo e ajuste cada fala.</p></div>
+      <div className={styles.uploadIntro}><span className={styles.eyebrow}><i /> AYMAR LABS / LEGENDAS</span><h1>Legendas que<br /><em>prendem atenção.</em></h1><p>Envie seu vídeo e gere legendas palavra por palavra com Legendas da Aymar Labs. Escolha um estilo e ajuste cada fala.</p></div>
       <div className={styles.uploadCard}>
-        <div className={styles.uploadMark}><Upload /></div><h2>Envie um vídeo para gerar legendas</h2><p>MP4, MOV ou WebM · Tamanho máximo: 2 GB</p>
+        <div className={styles.uploadMark}><Upload /></div><h2>Envie até cinco vídeos por vez</h2><p>MP4, MOV ou WebM · Até 2 GB por vídeo</p>
         <div className={styles.sourceMenu}><button className={styles.primaryButton} onClick={() => fileRef.current?.click()}><Upload /> Do meu computador</button><button onClick={() => setShowDrive(true)}><Cloud /> Do Google Drive</button><button onClick={() => mobileRef.current?.click()}><Phone /> Do meu celular</button></div>
-        <input ref={fileRef} className={styles.hiddenInput} type="file" accept="video/mp4,video/quicktime,video/webm,video/x-m4v" onChange={chooseFile} />
+        <input ref={fileRef} className={styles.hiddenInput} type="file" accept="video/mp4,video/quicktime,video/webm,video/x-m4v" multiple onChange={chooseFile} />
         <input ref={mobileRef} className={styles.hiddenInput} type="file" accept="video/*" capture="environment" onChange={chooseFile} />
         {!keyConfigured && <button className={styles.keyNotice} onClick={() => setShowKey(true)}><Key /> Conecte sua chave Deepgram antes de começar</button>}
+        {message && <p className={styles.error}>{message}</p>}
       </div>
     </section>}
 
     {(stage === 'ready' || stage === 'transcribing') && <section className={styles.preparePage}>
       <button className={styles.backButton} onClick={reset}><ArrowLeft /> Voltar</button>
       <div className={styles.prepareCard}><div className={styles.prepareTitle}><Sparkles /><h2>Gerar Legendas</h2></div>
-        <div className={styles.previewShell}>
-          <div className={styles.prepareVideoFrame} style={{ '--video-ratio': videoInfo ? videoInfo.width / videoInfo.height : 9 / 16 } as CSSProperties}>
-            {previewUrl ? <><video ref={videoRef} src={previewUrl} controls playsInline onLoadedMetadata={readVideoInfo} />{videoInfo && <span className={styles.aspectBadge}>{videoInfo.orientation} · {videoInfo.ratio} · {videoInfo.width}×{videoInfo.height}</span>}</> : <div className={styles.drivePreview}><Cloud /><strong>Vídeo do Google Drive</strong><span>A prévia local não está disponível.</span></div>}
+        {batchMode ? <div className={styles.batchQueue}>
+          <div className={styles.batchHeading}><strong>{batchItems.length} vídeos no lote</strong><span>Máximo: 5</span></div>
+          {batchItems.map((item, index) => <article className={styles.batchItem} key={item.id}>
+            <div className={styles.batchFile}><span>{String(index + 1).padStart(2, '0')}</span><div><strong title={item.file.name}>{item.file.name}</strong><small>{(item.file.size / (1024 * 1024)).toFixed(1)} MB · {item.status === 'queued' ? 'Aguardando' : item.status === 'uploading' ? `Enviando ${item.progress}%` : item.status === 'transcribing' ? 'Transcrevendo…' : item.status === 'done' ? `${item.captions.length} blocos prontos` : 'Falha na transcrição'}</small></div></div>
+            {item.status === 'uploading' && <div className={styles.batchProgress}><i style={{ width: `${item.progress}%` }} /></div>}
+            {item.status === 'error' && <p className={styles.batchError}>{item.error}</p>}
+            {item.status === 'done' && <button className={styles.batchEdit} type="button" disabled={stage === 'transcribing'} onClick={() => openBatchItem(item)}>Editar legendas</button>}
+          </article>)}
+          {batchComplete && <p className={styles.progressText}>Lote processado. Abra cada vídeo para revisar e exportar as legendas.</p>}
+        </div> : <>
+          <div className={styles.previewShell}>
+            <div className={styles.prepareVideoFrame} style={{ '--video-ratio': videoInfo ? videoInfo.width / videoInfo.height : 9 / 16 } as CSSProperties}>
+              {previewUrl ? <><video ref={videoRef} src={previewUrl} controls playsInline onLoadedMetadata={readVideoInfo} />{videoInfo && <span className={styles.aspectBadge}>{videoInfo.orientation} · {videoInfo.ratio} · {videoInfo.width}×{videoInfo.height}</span>}</> : <div className={styles.drivePreview}><Cloud /><strong>Vídeo do Google Drive</strong><span>A prévia local não está disponível.</span></div>}
+            </div>
           </div>
-        </div>
-        {file && <div className={styles.fileIdentity}><span>{file.name}</span><strong>{videoInfo ? `${videoInfo.orientation} · ${videoInfo.ratio}` : 'Identificando formato…'}</strong></div>}
-        {stage === 'transcribing' && <><div className={styles.progress}><i style={{ width: `${progress}%` }} /></div><p className={styles.progressText}>{message}</p></>}
+          {file && <div className={styles.fileIdentity}><span>{file.name}</span><strong>{videoInfo ? `${videoInfo.orientation} · ${videoInfo.ratio}` : 'Identificando formato…'}</strong></div>}
+          {stage === 'transcribing' && <><div className={styles.progress}><i style={{ width: `${progress}%` }} /></div><p className={styles.progressText}>{message}</p></>}
+        </>}
         <label className={styles.languageSelect}><span>Idioma do áudio:</span><select value={language} onChange={(event) => setLanguage(event.target.value)} disabled={stage === 'transcribing'}>{languages.map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select><ChevronDown /></label>
-        <button className={styles.generateButton} onClick={startTranscription} disabled={stage === 'transcribing'}><Sparkles /> {stage === 'transcribing' ? 'Gerando legendas…' : 'Gerar Legendas'}</button>
+        <button className={styles.generateButton} onClick={startTranscription} disabled={stage === 'transcribing' || (batchComplete && batchItems.every((item) => item.status === 'done'))}><Sparkles /> {stage === 'transcribing' ? (batchMode ? 'Gerando legendas do lote…' : 'Gerando legendas…') : batchMode ? batchComplete ? batchItems.some((item) => item.status === 'error') ? 'Tentar novamente os vídeos com erro' : 'Lote processado' : `Gerar legendas dos ${batchItems.length} vídeos` : 'Gerar Legendas'}</button>
       </div>
     </section>}
 
     {stage === 'editor' && <section className={styles.editorPage}>
-      <div className={styles.editorTop}><button onClick={reset}><ArrowLeft /> Novo vídeo</button><div><strong>Editor de legendas</strong><span>{captions.length} blocos{videoInfo ? ` · ${videoInfo.orientation} ${videoInfo.ratio}` : ''}</span></div><div className={styles.exportActions}><button onClick={() => exportSubtitles('srt')}><Download /> SRT</button><button onClick={() => exportSubtitles('vtt')}><Download /> VTT</button><button className={styles.exportPrimary} onClick={exportVideo} disabled={rendering || !previewUrl}><Download /> {rendering ? `Processando ${renderProgress}%` : 'Exportar MP4'}</button></div></div>
+      <div className={styles.editorTop}><button onClick={batchMode ? returnToBatch : reset}><ArrowLeft /> {batchMode ? 'Voltar ao lote' : 'Novo vídeo'}</button><div><strong>Editor de legendas</strong><span>{captions.length} blocos{videoInfo ? ` · ${videoInfo.orientation} ${videoInfo.ratio}` : ''}</span></div><div className={styles.exportActions}><button onClick={() => exportSubtitles('srt')}><Download /> SRT</button><button onClick={() => exportSubtitles('vtt')}><Download /> VTT</button><button className={styles.exportPrimary} onClick={exportVideo} disabled={rendering || !previewUrl}><Download /> {rendering ? `Processando ${renderProgress}%` : 'Exportar MP4'}</button></div></div>
       <div className={styles.editorGrid}>
         <div className={styles.videoColumn}>
           <div ref={stageRef} className={styles.videoStage}>

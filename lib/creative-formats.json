@@ -1163,24 +1163,18 @@
   "bonuses": [
     {
       "number": "01",
-      "title": "Portfólio de CTVs",
-      "image": "/formats/bonus/portfolio.png",
-      "url": "/portfoliodectvs"
-    },
-    {
-      "number": "02",
-      "title": "Prompts de IA",
+      "title": "Prompt de Motions",
       "image": "/formats/bonus/prompts.png",
       "url": "/promptsmotion"
     },
     {
-      "number": "03",
-      "title": "Site principal Aymar Labs",
-      "image": "/formats/bonus/site.png",
-      "url": "/"
+      "number": "02",
+      "title": "Legendas da Aymar Labs",
+      "image": "/formats/bonus/legendas.svg",
+      "url": "/legendas"
     },
     {
-      "number": "04",
+      "number": "03",
       "title": "Grupo de Alunos",
       "image": "/formats/bonus/grupo.png",
       "url": null
