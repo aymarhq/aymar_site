@@ -79,3 +79,8 @@
   .editorPanel{flex:1;min-height:0}
   .tabs{flex:none}
 }
+
+.styleFilters button{border:0;border-radius:4px;padding:8px 11px;margin:-8px -5px;background:transparent;color:#777;font:inherit;cursor:pointer;transition:background .16s ease,color .16s ease}
+.styleFilters button:hover{color:#f5f4ef}
+.styleFilters button[aria-pressed=true]{background:#1b1b1b;color:#f5f4ef}
+.styleFilters button:focus-visible{outline:1px solid #0a84ff;outline-offset:3px}

@@ -9,6 +9,7 @@ import styles from './legendas.module.css';
 
 type Stage = 'upload' | 'ready' | 'transcribing' | 'editor';
 type Tab = 'styles' | 'captions' | 'scenes';
+type StyleFilter = 'all' | 'standard' | 'custom';
 type Word = { text: string; start: number; end: number; confidence?: number; lineBreakAfter?: boolean; sourceIndex?: number };
 type Caption = { id: string; start: number; end: number; text: string; words: Word[]; visible: boolean };
 type TranscriptResponse = { status?: string; text?: string; words?: Word[]; language_code?: string; error?: string };
@@ -27,6 +28,11 @@ const captionStyles = [
   ['canto', 'Canto'], ['silk', 'Silk'], ['slash', 'SLASH'], ['dense', 'Dense'], ['open', 'Open'],
   ['vibe', 'Vibe'], ['rise', 'Rise'],
 ] as const;
+
+const styleGroups: Record<Exclude<StyleFilter, 'all'>, readonly string[]> = {
+  standard: ['hormozi', 'hormozi-two', 'negative', 'cove', 'marina', 'laguna', 'stack', 'open'],
+  custom: ['beast', 'leon', 'tuba', 'splitz', 'aria', 'lume', 'marca', 'canto', 'silk', 'slash', 'dense', 'vibe', 'rise'],
+};
 
 type CaptionEffect = 'none' | 'updown' | 'fade' | 'float' | 'blur' | 'rise' | 'bounce' | 'slide' | 'reveal' | 'pop' | 'glow' | 'type' | 'karaoke' | 'flip';
 type CaptionPreset = {
@@ -470,7 +476,7 @@ export default function LegendasClient({ username, initialKeyConfigured }: { use
   const [showDrive, setShowDrive] = useState(false); const [driveUrl, setDriveUrl] = useState(''); const [apiKey, setApiKey] = useState('');
   const [file, setFile] = useState<File | null>(null); const [previewUrl, setPreviewUrl] = useState(''); const [remoteUrl, setRemoteUrl] = useState('');
   const [language, setLanguage] = useState('auto'); const [progress, setProgress] = useState(0); const [message, setMessage] = useState('');
-  const [captions, setCaptions] = useState<Caption[]>([]); const [selectedStyle, setSelectedStyle] = useState('cove'); const [currentTime, setCurrentTime] = useState(0);
+  const [captions, setCaptions] = useState<Caption[]>([]); const [selectedStyle, setSelectedStyle] = useState('cove'); const [styleFilter, setStyleFilter] = useState<StyleFilter>('all'); const [currentTime, setCurrentTime] = useState(0);
   const [rendering, setRendering] = useState(false); const [renderProgress, setRenderProgress] = useState(0);
   const [videoInfo, setVideoInfo] = useState<VideoInfo | null>(null); const [videoBox, setVideoBox] = useState<VideoBox | null>(null);
   const [captionPosition, setCaptionPosition] = useState(presets.cove.captionPosition); const [captionSize, setCaptionSize] = useState(presets.cove.fontSize); const [highlightWords, setHighlightWords] = useState(true);
@@ -695,7 +701,7 @@ export default function LegendasClient({ username, initialKeyConfigured }: { use
           {message && <p className={styles.editorMessage}>{message}</p>}
         </div>
         <aside className={styles.editorPanel}><div className={styles.tabs}><button className={tab === 'styles' ? styles.activeTab : ''} onClick={() => setTab('styles')}>Escolher Estilo</button><button className={tab === 'captions' ? styles.activeTab : ''} onClick={() => setTab('captions')}>Editar Legendas</button><button className={tab === 'scenes' ? styles.activeTab : ''} onClick={() => setTab('scenes')}>Cenas</button></div>
-          {tab === 'styles' && <div className={styles.stylesPane}><div className={styles.styleFilters}><span>Todos</span><span>Padrão</span><span>Custom</span></div><div className={styles.styleGrid}>{captionStyles.map(([value, label]) => <button key={value} data-style={value} aria-pressed={selectedStyle === value} onClick={() => selectStyle(value)}><span>{label}</span></button>)}</div><div className={styles.styleControls}><label><span>Posição <strong>{captionPosition}%</strong></span><input type="range" min="18" max="88" value={captionPosition} onChange={(event) => setCaptionPosition(Number(event.target.value))} /></label><label><span>Tamanho <strong>{captionSize}px</strong></span><input type="range" min="30" max="120" step=".25" value={captionSize} onChange={(event) => setCaptionSize(Number(event.target.value))} /></label><label className={styles.colorControl}><span>Cor do texto</span><input type="color" value={textColor} onChange={(event) => setTextColor(event.target.value)} /></label><label className={styles.colorControl}><span>Cor do destaque</span><input type="color" value={highlightColor} onChange={(event) => setHighlightColor(event.target.value)} /></label><label className={styles.toggleControl}><span>Realçar palavras</span><input type="checkbox" checked={highlightWords} onChange={(event) => setHighlightWords(event.target.checked)} /></label></div></div>}
+          {tab === 'styles' && <div className={styles.stylesPane}><div className={styles.styleFilters}>{([['all', 'Todos'], ['standard', 'Padrão'], ['custom', 'Custom']] as const).map(([value, label]) => <button key={value} type="button" aria-pressed={styleFilter === value} onClick={() => setStyleFilter(value)}>{label}</button>)}</div><div className={styles.styleGrid}>{captionStyles.filter(([value]) => styleFilter === 'all' || styleGroups[styleFilter].includes(value)).map(([value, label]) => <button key={value} data-style={value} aria-pressed={selectedStyle === value} onClick={() => selectStyle(value)}><span>{label}</span></button>)}</div><div className={styles.styleControls}><label><span>Posição <strong>{captionPosition}%</strong></span><input type="range" min="18" max="88" value={captionPosition} onChange={(event) => setCaptionPosition(Number(event.target.value))} /></label><label><span>Tamanho <strong>{captionSize}px</strong></span><input type="range" min="30" max="120" step=".25" value={captionSize} onChange={(event) => setCaptionSize(Number(event.target.value))} /></label><label className={styles.colorControl}><span>Cor do texto</span><input type="color" value={textColor} onChange={(event) => setTextColor(event.target.value)} /></label><label className={styles.colorControl}><span>Cor do destaque</span><input type="color" value={highlightColor} onChange={(event) => setHighlightColor(event.target.value)} /></label><label className={styles.toggleControl}><span>Realçar palavras</span><input type="checkbox" checked={highlightWords} onChange={(event) => setHighlightWords(event.target.checked)} /></label></div></div>}
           {tab === 'captions' && <div className={styles.captionsPane}>{captions.map((caption, index) => <div className={styles.captionBlock} key={caption.id}><span className={styles.captionTime}>{time(caption.start)} — {time(caption.end)}</span><textarea value={caption.text} onChange={(event) => updateCaption(caption.id, { text: event.target.value })} /><div className={styles.captionTools}><button title="Ajustar início" onClick={() => seek(caption.start)}><Settings /></button><button title={caption.visible ? 'Ocultar' : 'Exibir'} onClick={() => updateCaption(caption.id, { visible: !caption.visible })}><Eye /></button><button title="Remover" onClick={() => removeCaption(caption.id)}><Trash /></button></div><button className={styles.addCaption} onClick={() => addCaption(index)} title="Adicionar legenda"><Plus /></button></div>)}</div>}
           {tab === 'scenes' && <div className={styles.scenesPane}>{scenes.map((scene, index) => <button key={index} onClick={() => seek(scene[0]?.start || 0)}><span>0{index + 1}</span><strong>Cena {index + 1}</strong><small>{scene.map((caption) => caption.text).join(' ').slice(0, 105)}{scene.map((caption) => caption.text).join(' ').length > 105 ? '…' : ''}</small></button>)}</div>}
         </aside>
