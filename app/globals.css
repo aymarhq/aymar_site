@@ -360,6 +360,15 @@ html[data-theme=light] .header.menu-active .brand-logo img{filter:none}
 .site-menu-kicker{font:10px 'JetBrains Mono',monospace;text-transform:uppercase;letter-spacing:.12em;color:#6db4ff}
 .site-menu-links{display:flex;flex-direction:column;gap:clamp(7px,1.4vh,18px);margin:auto 0;padding:26px 0}
 .site-menu-links a{display:block;width:max-content;max-width:100%;font-size:clamp(42px,4.7vw,83px);line-height:.9;font-weight:800;letter-spacing:-.072em;text-transform:uppercase;color:#f5f4ef;transition:color .22s ease,transform .22s ease}
+
+/* Arrow icons stay centered in their hit areas without circular frames. */
+.scroll-arrow{border:0;border-radius:0;background:transparent}
+.scroll-arrow:hover{border:0;background:transparent;color:var(--accent)}
+.back-to-top{border:0;border-radius:0;background:transparent}
+.back-to-top:hover,.back-to-top:focus-visible{border:0;background:transparent;color:var(--accent)}
+.video-controls button{border:0;border-radius:0;background:transparent}
+.video-controls button:hover,.video-controls button:focus-visible{border:0;background:transparent;color:var(--accent)}
+.site-menu-card-action{border:0;border-radius:0;background:transparent}
 .site-menu-links a:hover,.site-menu-links a:focus-visible{color:#6db4ff;transform:translateX(9px);outline:none}
 .site-menu-footer{display:flex;flex-wrap:wrap;gap:20px 26px;align-items:center;border-top:1px solid rgba(245,244,239,.23);padding-top:24px;font:10px 'JetBrains Mono',monospace;text-transform:uppercase;letter-spacing:.04em}
 .site-menu-footer a{display:inline-flex;align-items:center;gap:5px}

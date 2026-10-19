@@ -15,3 +15,5 @@
 .play{padding:0}
 .play .ui-icon{display:block;width:22px;height:22px;margin:0}
 .form button .ui-icon{width:16px;height:16px;margin:0}
+.cardArrow{border:0;border-radius:0}
+.card:hover .cardArrow{border:0}
