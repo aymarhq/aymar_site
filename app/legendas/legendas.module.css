@@ -41,3 +41,40 @@
 .captionOverlay .stackLayout{line-height:1}
 .captionOverlay .stackSupport{font-size:inherit;line-height:1;white-space:normal}
 @media(max-width:760px){.prepareVideoFrame{width:min(100%,calc(48vh * var(--video-ratio)))}.captionOverlay{max-width:none}}
+
+/* A pagina e fixa na janela; apenas listas extensas do editor podem rolar internamente. */
+.page{height:100svh;min-height:0;overflow:hidden;display:flex;flex-direction:column}
+.header{flex:none}
+.loginLayout,.uploadPage,.preparePage{flex:1;min-height:0;overflow:hidden}
+.loginLayout,.uploadPage{padding-top:clamp(18px,4svh,56px);padding-bottom:clamp(18px,4svh,56px)}
+.preparePage{padding-top:clamp(12px,2svh,25px);padding-bottom:clamp(12px,2svh,25px)}
+.prepareCard{margin-top:12px;padding:clamp(12px,1.5svh,20px)}
+.prepareTitle{margin-bottom:12px}
+.previewShell{height:min(42svh,420px)}
+.prepareVideoFrame{width:min(100%,calc(min(42svh,420px) * var(--video-ratio)))}
+.languageSelect{height:48px}
+.generateButton{height:45px}
+.editorPage{flex:1;min-height:0;display:flex;flex-direction:column;overflow:hidden}
+.editorTop{flex:none}
+.editorGrid{flex:1;min-height:0;height:auto}
+.editorPanel,.stylesPane,.captionsPane,.scenesPane{min-height:0}
+@media(max-width:760px){
+  .loginLayout,.uploadPage{height:auto;display:flex;flex-direction:column;justify-content:center;padding:12px 5vw;gap:0}
+  .loginLayout>div:first-child,.uploadIntro{width:100%;flex:none}
+  .loginLayout h1,.uploadIntro h1{font-size:clamp(40px,10vw,58px);margin:16px 0 10px}
+  .loginLayout>div>p,.uploadIntro>p{font-size:12px;line-height:1.4}
+  .loginCard,.uploadCard{width:100%;margin-top:18px;padding:18px}
+  .loginCard h2{font-size:28px;margin:16px 0}
+  .uploadMark{width:42px;height:42px;margin-bottom:12px}
+  .uploadCard h2{font-size:20px}
+  .sourceMenu{margin-top:15px;gap:7px}
+  .sourceMenu button{height:42px}
+  .keyNotice{margin-top:6px}
+  .preparePage{padding:10px 4vw}
+  .previewShell{height:min(39svh,330px)}
+  .prepareVideoFrame{width:min(100%,calc(min(39svh,330px) * var(--video-ratio)))}
+  .editorGrid{display:flex;flex-direction:column}
+  .videoColumn{height:50%;min-height:0;flex:none;padding:10px 4vw}
+  .editorPanel{flex:1;min-height:0}
+  .tabs{flex:none}
+}
