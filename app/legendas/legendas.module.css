@@ -52,6 +52,7 @@
 .prepareTitle{margin-bottom:12px}
 .previewShell{height:min(42svh,420px)}
 .prepareVideoFrame{width:min(100%,calc(min(42svh,420px) * var(--video-ratio)))}
+.prepareVideoFrame,.videoFrame{border:0}
 .languageSelect{height:48px}
 .generateButton{height:45px}
 .editorPage{flex:1;min-height:0;display:flex;flex-direction:column;overflow:hidden}
