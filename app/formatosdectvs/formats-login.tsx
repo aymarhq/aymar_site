@@ -15,7 +15,7 @@ export default function FormatsLogin({ configured }: { configured: boolean }) {
     const form = new FormData(event.currentTarget);
     setBusy(true); setError('');
     try {
-      const response = await fetch('/api/portfolio/session', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email: form.get('email'), username: form.get('username'), password: form.get('password') }) });
+      const response = await fetch('/api/checkout/formatos/login', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email: form.get('email'), password: form.get('password') }) });
       const result = await response.json();
       if (!response.ok) throw new Error(result.error || 'Não foi possível entrar.');
       router.refresh();
@@ -27,14 +27,15 @@ export default function FormatsLogin({ configured }: { configured: boolean }) {
     <section className={styles.loginLayout}>
       <div><span className={styles.eyebrow}><i /> ACESSO RESERVADO / AYMAR LABS</span><h1>50 formatos.<br /><em>Que escalam.</em></h1><p>Explicações, exemplos reais e bônus para encontrar o próximo formato do seu criativo.</p></div>
       <div className={styles.loginCard}><span className={styles.sectionLabel}>FORMATOS DE CTVS</span><h2>Entre para explorar.</h2>
-        {configured ? <form onSubmit={submit} className={styles.form}>
+        <form onSubmit={submit} className={styles.form}>
           <label>E-mail<input name="email" type="email" autoComplete="email" required /></label>
-          <label>Username<input name="username" type="text" autoComplete="nickname" pattern="[A-Za-z0-9_.-]{3,24}" title="De 3 a 24 caracteres, sem espaços" placeholder="ex.: pablo.carmo" required /></label>
           <label>Senha de acesso<input name="password" type="password" autoComplete="current-password" required /></label>
           <button type="submit" disabled={busy}>{busy ? 'Entrando…' : <>Acessar biblioteca <ArrowRight /></>}</button>
           {error && <p role="alert" className={styles.error}>{error}</p>}
-        </form> : <p>O acesso está sendo preparado.</p>}
-        <small>Use o mesmo acesso do portfólio de CTVs.</small>
+        </form>
+        {!configured && <p className={styles.error} role="status">O acesso ainda está sendo configurado.</p>}
+        <small>Entre com o e-mail da compra e a senha que você criou após o pagamento.</small>
+        <small>Comprou agora? Use o link de retorno da Stripe para criar seu acesso.</small>
       </div>
     </section>
   </main>;

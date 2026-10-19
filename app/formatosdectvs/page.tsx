@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import { portfolioSession } from '../../lib/portfolio-auth';
+import { formatsSession } from '../../lib/formats-access';
 import type { FormatsCatalog } from '../../lib/creative-formats';
 import catalog from '../../lib/creative-formats.json';
 import FormatsLibrary from './formats-library';
@@ -13,7 +14,9 @@ export const metadata: Metadata = {
 };
 
 export default async function FormatsPage() {
-  const session = await portfolioSession();
-  if (!session) return <FormatsLogin configured={Boolean(process.env.PORTFOLIO_ADMIN_PASSWORD || process.env.PORTFOLIO_STUDENT_PASSWORD)} />;
-  return <FormatsLibrary catalog={catalog as FormatsCatalog} username={session.username} />;
+  const portfolio = await portfolioSession();
+  if (portfolio?.role === 'admin') return <FormatsLibrary catalog={catalog as FormatsCatalog} username={portfolio.username} />;
+  const buyer = await formatsSession();
+  if (!buyer) return <FormatsLogin configured={Boolean(process.env.STRIPE_SECRET_KEY && process.env.BLOB_READ_WRITE_TOKEN)} />;
+  return <FormatsLibrary catalog={catalog as FormatsCatalog} username={buyer.username} />;
 }

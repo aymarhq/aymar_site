@@ -7,6 +7,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import BrandLogo from '../../components/BrandLogo';
 import { ArrowUpRight, Close, Play, Search } from '../../components/Icon';
 import type { CreativeFormat, FormatsCatalog } from '../../lib/creative-formats';
+import { SUPPORT_URL } from '../../lib/site-links';
 import styles from './formats.module.css';
 
 export default function FormatsLibrary({ catalog, username }: { catalog: FormatsCatalog; username: string }) {
@@ -44,7 +45,7 @@ export default function FormatsLibrary({ catalog, username }: { catalog: Formats
     <header className={styles.header}>
       <BrandLogo size="sm" className={styles.logo} href="/" />
       <span className={styles.headerLabel}>Biblioteca de formatos</span>
-      <nav className={styles.headerNav} aria-label="Navegação da biblioteca"><button onClick={() => bonusSection.current?.scrollIntoView({ behavior: 'smooth' })}>Bônus</button><a href={catalog.supportUrl} target="_blank" rel="noopener noreferrer">Suporte <ArrowUpRight /></a>{catalog.groupUrl && <a href={catalog.groupUrl} target="_blank" rel="noopener noreferrer">Grupo <ArrowUpRight /></a>}</nav>
+      <nav className={styles.headerNav} aria-label="Navegação da biblioteca"><button onClick={() => bonusSection.current?.scrollIntoView({ behavior: 'smooth' })}>Bônus</button><a href={SUPPORT_URL} target="_blank" rel="noopener noreferrer">Suporte <ArrowUpRight /></a>{catalog.groupUrl && <a href={catalog.groupUrl} target="_blank" rel="noopener noreferrer">Grupo <ArrowUpRight /></a>}</nav>
     </header>
 
     <section className={styles.hero}>
@@ -74,7 +75,7 @@ export default function FormatsLibrary({ catalog, username }: { catalog: Formats
       })}</div>
     </section>
 
-    <footer className={styles.footer}><div><span>© {new Date().getFullYear()} Aymar Labs</span><small>Conteúdo do acervo Serraglio / DVN Copy, reproduzido com autorização.</small></div><div className={styles.footerLinks}><Link href="/portfoliodectvs">Portfólio de CTVs <ArrowUpRight /></Link><Link href="/promptsmotion">Prompts Motion <ArrowUpRight /></Link><button onClick={async () => { await fetch('/api/portfolio/session', { method: 'DELETE' }); router.refresh(); }}>Sair</button></div></footer>
+    <footer className={styles.footer}><div><span>© {new Date().getFullYear()} Aymar Labs</span><small>Conteúdo do acervo Serraglio / DVN Copy, reproduzido com autorização.</small></div><div className={styles.footerLinks}><Link href="/portfoliodectvs">Portfólio de CTVs <ArrowUpRight /></Link><Link href="/promptsmotion">Prompts Motion <ArrowUpRight /></Link><button onClick={async () => { await Promise.all([fetch('/api/checkout/formatos/login', { method: 'DELETE' }), fetch('/api/portfolio/session', { method: 'DELETE' })]); router.refresh(); }}>Sair</button></div></footer>
 
     <dialog ref={dialog} className={styles.dialog} aria-labelledby="format-title" onClose={() => { setActive(null); setPlaying(false); }} onClick={(event) => { if (event.target === event.currentTarget) dialog.current?.close(); }}>
       {active && <div className={styles.dialogInner}>
