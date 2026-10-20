@@ -39,7 +39,6 @@ export default function FormatosLandingPage() {
           <div className={styles.previewHero}><span className={styles.previewKicker}>● &nbsp; AYMAR LABS / FORMATOS DE CTVS</span><strong>50 formatos.<br /><em>Que escalam.</em></strong><small>50 FORMATOS <b>·</b> {exampleCount} EXEMPLOS</small></div>
           <div className={styles.previewLibrary}><div className={styles.previewLibraryHead}><span>ENCONTRE SEU PRÓXIMO CRIATIVO</span><strong>Todos os formatos<span>.</span></strong></div><div className={styles.previewGrid}>{catalog.formats.slice(0, 6).map((format) => <div key={format.number}><span>{String(format.number).padStart(2, '0')}</span><strong>{format.title}</strong><small>VER FORMATO ↗</small></div>)}</div></div>
         </div>
-        <div className={styles.previewStand} aria-hidden="true" />
         <div className={styles.visualIndex}><span>01 / 50</span><span>Um formato diferente muda a forma de contar a mesma história.</span></div>
       </div>
     </section>
