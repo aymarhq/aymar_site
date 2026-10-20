@@ -87,6 +87,17 @@ function safeName(name: string) { return name.toLowerCase().normalize('NFD').rep
 function time(ms: number) { const total = Math.max(0, ms) / 1000; return `${Math.floor(total / 60)}:${(total % 60).toFixed(2).padStart(5, '0')}`; }
 function timestamp(ms: number, vtt = false) { const total = Math.max(0, ms); const hours = Math.floor(total / 3600000); const minutes = Math.floor((total % 3600000) / 60000); const seconds = Math.floor((total % 60000) / 1000); const millis = Math.floor(total % 1000); return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}${vtt ? '.' : ','}${String(millis).padStart(3, '0')}`; }
 
+function readVideoDuration(blob: Blob) {
+  return new Promise<number>((resolve, reject) => {
+    const probe = document.createElement('video'); const url = URL.createObjectURL(blob);
+    const cleanup = () => { probe.onloadedmetadata = null; probe.onerror = null; probe.removeAttribute('src'); probe.load(); URL.revokeObjectURL(url); };
+    probe.preload = 'metadata';
+    probe.onloadedmetadata = () => { const duration = probe.duration; cleanup(); Number.isFinite(duration) && duration > 0 ? resolve(duration) : reject(new Error('Não foi possível validar a duração do MP4 exportado.')); };
+    probe.onerror = () => { cleanup(); reject(new Error('Não foi possível validar o MP4 exportado.')); };
+    probe.src = url;
+  });
+}
+
 function wordText(word: Word) { return word.text.trim(); }
 function joinedWords(words: Word[]) { return words.map(wordText).join(' '); }
 
@@ -716,6 +727,8 @@ export default function LegendasClient({ username, initialKeyConfigured }: { use
   async function exportVideo() {
     const video = videoRef.current; if (!video || !previewUrl) { setMessage('Para exportar o vídeo pronto, selecione o arquivo original neste aparelho.'); return; }
     if (!('MediaRecorder' in window)) { setMessage('Seu navegador não oferece exportação de vídeo. Use Chrome ou Edge.'); return; }
+    const expectedDuration = Number.isFinite(video.duration) ? video.duration : 0;
+    if (expectedDuration <= 0) { setMessage('Aguarde o vídeo carregar completamente antes de exportar.'); return; }
     setRendering(true); setRenderProgress(0); setMessage('Preparando o vídeo para exportação…');
     const savedTime = video.currentTime; const savedMuted = video.muted; const wasPaused = video.paused;
     let canvasStream: MediaStream | null = null; let sourceStream: MediaStream | null = null; let recorder: MediaRecorder | null = null;
@@ -746,6 +759,7 @@ export default function LegendasClient({ username, initialKeyConfigured }: { use
       let cueIndex = 0; let lastPaintedTime = -1; let lastProgress = -1;
       const stopRecording = () => { if (recorder?.state === 'recording') recorder.stop(); };
       const drawFrame = () => {
+        if (recorder?.state !== 'recording') return;
         const seconds = video.currentTime;
         if (lastPaintedTime < 0 || seconds - lastPaintedTime >= 1 / 30 || video.ended) {
           lastPaintedTime = seconds;
@@ -761,10 +775,11 @@ export default function LegendasClient({ username, initialKeyConfigured }: { use
         }
         const progress = video.duration ? Math.min(90, Math.round(seconds / video.duration * 90)) : 0;
         if (progress !== lastProgress) { lastProgress = progress; setRenderProgress(progress); }
-        if (!video.ended && !video.paused && recorder?.state === 'recording') animationFrame = requestAnimationFrame(drawFrame);
-        else stopRecording();
+        if (video.ended) stopRecording();
+        else animationFrame = requestAnimationFrame(drawFrame);
       };
       endedHandler = stopRecording;
+      video.addEventListener('ended', stopRecording, { once: true });
       video.pause();
       if (Math.abs(video.currentTime) > .01) await new Promise<void>((resolve, reject) => {
         const timeout = window.setTimeout(() => { video.removeEventListener('seeked', onSeeked); reject(new Error('Não foi possível voltar ao início do vídeo para exportar.')); }, 10000);
@@ -772,8 +787,10 @@ export default function LegendasClient({ username, initialKeyConfigured }: { use
         video.addEventListener('seeked', onSeeked, { once: true }); video.currentTime = 0;
       }); else video.currentTime = 0;
       context.fillStyle = '#000'; context.fillRect(0, 0, canvas.width, canvas.height); context.drawImage(video, 0, 0, canvas.width, canvas.height);
-      video.muted = false; setMessage(mimeType.startsWith('video/mp4') ? 'Gravando diretamente em MP4…' : 'Gravando o vídeo; convertendo para MP4 no final…'); recorder.start(1000); await video.play(); video.addEventListener('ended', stopRecording, { once: true }); animationFrame = requestAnimationFrame(drawFrame); await recorderStopped;
+      video.muted = false; setMessage(mimeType.startsWith('video/mp4') ? 'Gravando diretamente em MP4…' : 'Gravando o vídeo; convertendo para MP4 no final…'); recorder.start(1000); await video.play(); animationFrame = requestAnimationFrame(drawFrame); await recorderStopped;
+      if (!video.ended && video.currentTime < expectedDuration - 0.25) throw new Error(`A gravação foi interrompida em ${time(video.currentTime * 1000)} de ${time(expectedDuration * 1000)}. O vídeo não foi baixado; tente exportar novamente.`);
       const recorded = new Blob(chunks, { type: mimeType }); const mp4 = mimeType.startsWith('video/mp4') ? recorded : await convertToMp4(recorded);
+      const exportedDuration = await readVideoDuration(mp4); if (exportedDuration < expectedDuration - Math.max(0.5, expectedDuration * 0.01)) throw new Error(`O MP4 ficou incompleto (${time(exportedDuration * 1000)} de ${time(expectedDuration * 1000)}). O arquivo não foi baixado; tente exportar novamente.`);
       const link = document.createElement('a'); link.href = URL.createObjectURL(mp4); link.download = `video-legendado-${Date.now()}.mp4`; link.click(); setTimeout(() => URL.revokeObjectURL(link.href), 2000); setRenderProgress(100); setMessage('Vídeo MP4 exportado.');
     } catch (reason) { if (recorder?.state === 'recording') recorder.stop(); setMessage(reason instanceof Error ? reason.message : 'Não foi possível renderizar este vídeo no navegador.'); }
     finally {
@@ -834,7 +851,7 @@ export default function LegendasClient({ username, initialKeyConfigured }: { use
         <div className={styles.videoColumn}>
           <div ref={stageRef} className={styles.videoStage}>
             <div className={styles.videoFrame} style={{ width: videoBox?.frameWidth, height: videoBox?.frameHeight, aspectRatio: videoInfo ? `${videoInfo.width} / ${videoInfo.height}` : '9 / 16' }}>
-              {previewUrl ? <video ref={videoRef} src={previewUrl} controls playsInline onLoadedMetadata={readVideoInfo} onTimeUpdate={(event) => setCurrentTime(event.currentTarget.currentTime)} /> : <div className={styles.drivePreview}><Cloud /><strong>Prévia indisponível</strong><span>Edite o texto e exporte SRT ou VTT.</span></div>}
+              {previewUrl ? <video ref={videoRef} src={previewUrl} controls={!rendering} playsInline onLoadedMetadata={readVideoInfo} onTimeUpdate={(event) => setCurrentTime(event.currentTarget.currentTime)} /> : <div className={styles.drivePreview}><Cloud /><strong>Prévia indisponível</strong><span>Edite o texto e exporte SRT ou VTT.</span></div>}
               {activeCaption && activeCue && videoBox && <div style={{ left: videoBox.left, width: videoBox.width, bottom: videoBox.bottom, opacity: chunkOpacity(selectedStyle, currentTime * 1000, activeCue.start), fontFamily: `'${(presets[selectedStyle] || presets.cove).fontFamily}', sans-serif`, fontWeight: (presets[selectedStyle] || presets.cove).fontWeight, fontSize: `${Math.max(10, captionSize * videoBox.scale)}px`, letterSpacing: (presets[selectedStyle] || presets.cove).letterSpacing, lineHeight: (presets[selectedStyle] || presets.cove).lineHeight || 1.02 } as CSSProperties} className={styles.captionOverlay}><ClipaCaption words={activeWords} activeIndex={activeWordIndex} preset={presets[selectedStyle] || presets.cove} now={currentTime * 1000} scale={videoBox.scale} captionStart={activeCaption.start} highlightWords={highlightWords} textColor={textColor} highlightColor={highlightColor} /></div>}
               {videoInfo && <span className={styles.aspectBadge}>{videoInfo.ratio} · {videoInfo.width}×{videoInfo.height}</span>}
             </div>
