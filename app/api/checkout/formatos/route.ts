@@ -24,16 +24,21 @@ export async function POST() {
     const session = await stripe.checkout.sessions.create({
       mode: 'payment',
       ui_mode: 'hosted_page',
-      customer_creation: 'always',
       success_url: `${appUrl}/50formatos/obrigado?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${appUrl}/50formatos`,
       line_items: [{ price: priceId, quantity: 1 }],
       billing_address_collection: 'auto',
-      phone_number_collection: { enabled: false },
-      automatic_tax: { enabled: false },
+      name_collection: {
+        individual: {
+          enabled: true,
+          optional: true,
+        },
+      },
       allow_promotion_codes: false,
+      consent_collection: { terms_of_service: 'required' },
       submit_type: 'auto',
-      integration_identifier: 'hosted_web_0002',
+      saved_payment_method_options: { payment_method_save: 'enabled' },
+      integration_identifier: 'hosted_web_0001',
       origin_context: 'web',
     });
 

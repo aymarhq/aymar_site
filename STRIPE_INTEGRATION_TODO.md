@@ -24,24 +24,26 @@ O Checkout hospedado foi ligado à landing page e o cadastro da conta compara o 
 | `ui_mode` | `hosted_page` |
 | `mode` | `payment` |
 | `billing_address_collection` | `auto` |
-| `phone_number_collection.enabled` | `false` |
-| `automatic_tax.enabled` | `false` |
+| `name_collection.individual.enabled` | `true` |
+| `name_collection.individual.optional` | `true` |
 | `allow_promotion_codes` | `false` |
+| `consent_collection.terms_of_service` | `required` |
 | `submit_type` | `auto` |
-| `integration_identifier` | `hosted_web_0002` |
+| `saved_payment_method_options.payment_method_save` | `enabled` |
+| `integration_identifier` | `hosted_web_0001` |
 | `origin_context` | `web` |
-| `customer_creation` | `always` |
 
-`payment_method_collection` foi omitido porque o produto é uma cobrança avulsa; as instruções do Stripe fornecidas para este projeto o incluem apenas no modo `subscription`. Antes de abrir uma sessão, o servidor confirma que o Price ID está ativo, é avulso e custa exatamente R$ 19,90.
+`payment_method_collection` foi omitido porque o produto é uma cobrança avulsa. Antes de abrir uma sessão, o servidor confirma que o Price ID está ativo, é avulso e custa exatamente R$ 19,90. Como a coleta dos termos foi definida como obrigatória, configure também a URL dos Termos de Serviço da empresa nas configurações da conta Stripe.
 
 ## Configuração e testes
 
 1. Rotacione/revogue a chave de teste compartilhada no chat. Gere outra e salve `STRIPE_SECRET_KEY` apenas como variável protegida no servidor/Vercel.
 2. Crie no Stripe um produto com preço único de **R$ 19,90** e configure `STRIPE_FORMATOS_PRICE_ID` com o ID `price_...` real. Chave e preço devem pertencer ao mesmo modo: teste com teste, ativo com ativo.
 3. Configure `APP_URL` e o Blob no ambiente e implante. Quando os dados estiverem completos, o botão da landing page cria a sessão no servidor e redireciona ao Checkout hospedado.
-4. Teste em modo de teste com cartão `4242 4242 4242 4242`, validade futura e CVC de três dígitos. Teste também cancelamento e erro. Não use cartão real em modo de teste.
-5. Após o pagamento, a página de retorno consulta a sessão na Stripe. O comprador define a senha ali; o servidor só cria a conta se a sessão estiver paga, for deste produto, custar R$ 19,90 e o e-mail bater com o da compra. O cadastro é único por e-mail e fica em Blob privado; a senha é armazenada com hash scrypt. Depois, o mesmo e-mail e senha permitem entrar novamente.
-6. O acesso não é liberado apenas por abrir a página de retorno. Se o comprador fechar o navegador antes de criar a senha, a equipe precisará localizar o pagamento e orientar o cadastro. Defina também a rotina de suporte para recuperação de conta e reembolsos antes da venda.
+4. Configure os Termos de Serviço na conta Stripe, pois o Checkout solicitará aceite obrigatório, e verifique a opção de salvar método de pagamento na experiência hospedada.
+5. Teste em modo de teste com cartão `4242 4242 4242 4242`, validade futura e CVC de três dígitos. Teste também cancelamento e erro. Não use cartão real em modo de teste.
+6. Após o pagamento, a página de retorno consulta a sessão na Stripe. O comprador define a senha ali; o servidor só cria a conta se a sessão estiver paga, for deste produto, custar R$ 19,90 e o e-mail bater com o da compra. O cadastro é único por e-mail e fica em Blob privado; a senha é armazenada com hash scrypt. Depois, o mesmo e-mail e senha permitem entrar novamente.
+7. O acesso não é liberado apenas por abrir a página de retorno. Se o comprador fechar o navegador antes de criar a senha, a equipe precisará localizar o pagamento e orientar o cadastro. Defina também a rotina de suporte para recuperação de conta e reembolsos antes da venda.
 
 ## Arquivos e fluxo
 
