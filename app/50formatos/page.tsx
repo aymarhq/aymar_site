@@ -3,8 +3,6 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { ArrowRight, ArrowUpRight } from '../../components/Icon';
 import catalog from '../../lib/creative-formats.json';
-import { formatsCheckoutReady } from '../../lib/formats-access';
-import { SUPPORT_URL } from '../../lib/site-links';
 import styles from './landing.module.css';
 
 export const metadata: Metadata = {
@@ -16,9 +14,6 @@ export const metadata: Metadata = {
 const exampleCount = catalog.formats.reduce((total, format) => total + format.examples.length, 0);
 
 export default function FormatosLandingPage() {
-  const checkoutReady = formatsCheckoutReady();
-  const supportHref = `${SUPPORT_URL}?text=${encodeURIComponent('Olá! Quero concluir a compra dos 50 Formatos de Criativos por R$ 19,90.')}`;
-
   return <main className={styles.page} id="top">
     <header className={styles.header}>
       <Link href="/" className={styles.logo} aria-label="Aymar Labs — página inicial"><Image src="/aymar-wordmark.png" alt="Aymar Labs" width={3150} height={863} priority /></Link>
@@ -50,7 +45,7 @@ export default function FormatosLandingPage() {
       <div className={styles.insideContent}><p>Você entra, escolhe um formato e vê como ele funciona. Em vez de tentar adivinhar o que gravar, parte de uma estrutura e adapta a mensagem ao seu produto.</p><div className={styles.featureList}><div><span>01</span><strong>50 formatos organizados</strong><p>De caixinha de perguntas a POV e diálogo: várias maneiras de apresentar a sua oferta.</p></div><div><span>02</span><strong>Explicação de cada formato</strong><p>Entenda a lógica do criativo antes de montar o seu roteiro.</p></div><div><span>03</span><strong>118 exemplos</strong><p>Assista às referências e escolha o caminho que faz sentido para a sua campanha.</p></div></div></div>
     </section>
 
-    <section className={styles.offer} id="acesso" aria-labelledby="offer-title"><div className={styles.offerTop}><span>50 FORMATOS DE CRIATIVOS</span><span>AYMAR LABS / ACESSO</span></div><div className={styles.offerGrid}><div><p className={styles.kicker}>Pronto para sair da folha em branco?</p><h2 id="offer-title">Abra a biblioteca.<br /><em>Escolha um formato.</em><br />Crie o próximo.</h2></div><div className={styles.purchase}><p>Você leva acesso à biblioteca com <strong>50 formatos de criativos, explicações de cada estrutura e 118 exemplos</strong> para consultar na hora de criar seus anúncios.</p><div className={styles.price}><span>Pagamento avulso</span><strong>R$ 19,90</strong></div>{checkoutReady ? <form action="/api/checkout/formatos" method="post"><button type="submit" className={styles.checkoutButton}>QUERO OS 50 FORMATOS AGORA <ArrowUpRight /></button></form> : <a href={supportHref} className={styles.checkoutButton} target="_blank" rel="noopener noreferrer">QUERO OS 50 FORMATOS AGORA <ArrowUpRight /></a>}<small>{checkoutReady ? 'Pagamento seguro com Stripe. O e-mail da compra será seu login.' : 'Fale com o suporte para concluir a compra.'}</small></div></div></section>
+    <section className={styles.offer} id="acesso" aria-labelledby="offer-title"><div className={styles.offerTop}><span>50 FORMATOS DE CRIATIVOS</span><span>AYMAR LABS / ACESSO</span></div><div className={styles.offerGrid}><div><p className={styles.kicker}>Pronto para sair da folha em branco?</p><h2 id="offer-title">Abra a biblioteca.<br /><em>Escolha um formato.</em><br />Crie o próximo.</h2></div><div className={styles.purchase}><p>Você leva acesso à biblioteca com <strong>50 formatos de criativos, explicações de cada estrutura e 118 exemplos</strong> para consultar na hora de criar seus anúncios.</p><div className={styles.price}><span>Pagamento avulso</span><strong>R$ 19,90</strong></div><form action="/api/checkout/formatos" method="post"><button type="submit" className={styles.checkoutButton}>QUERO OS 50 FORMATOS AGORA <ArrowUpRight /></button></form><small>Pagamento seguro com Stripe. O e-mail da compra será seu login.</small></div></div></section>
 
     <footer className={styles.footer}><Link href="/" aria-label="Aymar Labs — página inicial">AYMAR LABS</Link><span>© {new Date().getFullYear()} Aymar Labs</span></footer>
   </main>;
