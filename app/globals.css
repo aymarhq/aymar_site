@@ -527,9 +527,9 @@ main#top>.studio.copy-benefits{display:block;order:3;min-height:0}
   #contato .contact-content p{text-align:center}
 }
 
-/* Blue CTA card sits inside the light contact section. */
+/* Black CTA card sits inside the light contact section. */
 #contato{position:relative;isolation:isolate}
-#contato::before{content:'';position:absolute;inset:clamp(28px,4vw,64px) 5.5vw;z-index:0;border-radius:4px;background:#0a0a0a}
+#contato::before{content:'';position:absolute;inset:clamp(40px,5vw,72px) auto clamp(48px,5vw,72px);left:50%;width:min(84vw,1160px);transform:translateX(-50%);z-index:0;border-radius:4px;background:#0a0a0a}
 #contato>*{position:relative;z-index:1}
 #contato>.eyebrow{color:var(--accent)}
 #contato .contact-content>h2{color:#f5f4ef}
@@ -540,5 +540,5 @@ main#top>.studio.copy-benefits{display:block;order:3;min-height:0}
 #contato .contact-response{color:rgba(245,244,239,.62)}
 #contato .contact-links a{color:#f5f4ef}
 #contato .contact-links a:hover{color:var(--accent)}
-@media(max-width:719px){#contato::before{inset:24px 6vw 34px}#contato .contact-content>h2{padding-inline:18px}#contato .contact-content>div{width:min(calc(100% - 40px),360px)}#contato .contact-whatsapp{font-size:clamp(10px,3vw,12px);padding-inline:8px}#contato .contact-links{margin-top:42px}}
+@media(max-width:719px){#contato::before{inset:28px 7vw 42px;width:auto;transform:none}#contato .contact-content>h2{padding-inline:18px}#contato .contact-content>div{width:min(calc(100% - 40px),360px)}#contato .contact-whatsapp{font-size:clamp(10px,3vw,12px);padding-inline:8px}#contato .contact-links{margin-top:42px}}
 @media(max-width:360px){#contato .contact-content>h2{font-size:34px;padding-inline:8px}#contato .contact-content>div{width:min(calc(100% - 16px),360px)}}
