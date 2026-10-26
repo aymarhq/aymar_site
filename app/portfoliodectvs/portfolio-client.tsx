@@ -143,7 +143,7 @@ export default function PortfolioClient({ offers, uploadConfigured, initialAdmin
     <header className={styles.header}>
       <BrandLogo size="sm" className={styles.logo} href="/" label="Aymar Labs, página inicial" />
       <span className={styles.headerLabel}>Biblioteca de criativos</span>
-      <div className={extras.headerActions}>{username && <span className={extras.username}>@{username}</span>}{authenticated && <button className={styles.adminButton} onClick={() => { setUploadOffer(selected); setNotice(''); setAdminOpen(true); }}>+ Adicionar vídeo</button>}<button className={extras.signOut} onClick={async () => { await fetch('/api/portfolio/session', { method: 'DELETE' }); router.refresh(); }}>Sair</button></div>
+      <div className={extras.headerActions}><Link className={extras.fullAccess} href="/portfoliodectvs/acesso">Acesso completo <ArrowUpRight /></Link>{authenticated && <><span className={extras.username}>@{username}</span><button className={styles.adminButton} onClick={() => { setUploadOffer(selected); setNotice(''); setAdminOpen(true); }}>+ Adicionar vídeo</button><button className={extras.signOut} onClick={async () => { await fetch('/api/portfolio/session', { method: 'DELETE' }); router.refresh(); }}>Sair</button></>}</div>
     </header>
 
     <section className={styles.hero}>

@@ -1,6 +1,5 @@
 import { get } from '@vercel/blob';
 import { NextResponse } from 'next/server';
-import { portfolioSession } from '../../../../lib/portfolio-auth';
 import { getHiddenDriveVideoIds } from '../../../../lib/portfolio-manifest';
 import { isPortfolioUploadPathname, portfolioOffers } from '../../../../lib/portfolio';
 
@@ -36,8 +35,6 @@ async function getStoredFile(pathname: string, range: string | null) {
 }
 
 export async function GET(request: Request) {
-  if (!(await portfolioSession())) return NextResponse.json({ error: 'Entre no portfólio para assistir aos vídeos.' }, { status: 401 });
-
   const { searchParams } = new URL(request.url);
   const pathname = searchParams.get('pathname');
   const poster = searchParams.get('poster') === '1';

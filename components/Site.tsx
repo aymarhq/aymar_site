@@ -42,7 +42,7 @@ function Cursor({ label }: { label: string }) {
 function Header({ dict, menuOpen, setMenuOpen }: { dict: Dict; menuOpen: boolean; setMenuOpen: (open: boolean) => void }) {
   const [scrolled, setScrolled] = useState(false); const [hidden, setHidden] = useState(false); const lastScroll = useRef(0);
   useEffect(() => { const onScroll = () => { const current = window.scrollY; const delta = current - lastScroll.current; setScrolled(current > 20); if (menuOpen || current <= 20) setHidden(false); else if (Math.abs(delta) >= 8) setHidden(delta > 0); lastScroll.current = current; }; window.addEventListener('scroll', onScroll, { passive: true }); return () => window.removeEventListener('scroll', onScroll); }, [menuOpen]);
-  return <header className={`header ${scrolled ? 'scrolled' : ''} ${hidden && !menuOpen ? 'header-hidden' : ''} ${menuOpen ? 'menu-active' : ''}`}><BrandLogo size="sm" label={dict.brand} /><Link className="header-portfolio-link" href="/portfoliodectvs" onClick={() => setMenuOpen(false)}>{dict.lang === 'pt' ? 'Portfólio de CTVs' : 'CTV portfolio'} <ArrowUpRight /></Link><button className="header-menu-toggle" type="button" aria-label={menuOpen ? dict.ui.closeMenu : dict.ui.openMenu} aria-expanded={menuOpen} aria-controls="site-menu" onClick={() => setMenuOpen(!menuOpen)}><MenuLines open={menuOpen} /></button></header>;
+  return <header className={`header ${scrolled ? 'scrolled' : ''} ${hidden && !menuOpen ? 'header-hidden' : ''} ${menuOpen ? 'menu-active' : ''}`}><BrandLogo size="sm" label={dict.brand} /><Link className="header-portfolio-link" href="/portfoliodectvs/acesso" onClick={() => setMenuOpen(false)}>ACESSO COMPLETO <ArrowUpRight /></Link><button className="header-menu-toggle" type="button" aria-label={menuOpen ? dict.ui.closeMenu : dict.ui.openMenu} aria-expanded={menuOpen} aria-controls="site-menu" onClick={() => setMenuOpen(!menuOpen)}><MenuLines open={menuOpen} /></button></header>;
 }
 
 function FullscreenMenu({ dict, open, setOpen }: { dict: Dict; open: boolean; setOpen: (open: boolean) => void }) {
@@ -62,7 +62,8 @@ function FullscreenMenu({ dict, open, setOpen }: { dict: Dict; open: boolean; se
   const links = [
     { href: '#videos', label: dict.nav.studio },
     { href: '#trabalhos', label: dict.nav.work },
-    { href: '/portfoliodectvs', label: dict.lang === 'pt' ? 'Portfólio de CTVs' : 'CTV portfolio' },
+    { href: '/portfoliodectvs', label: dict.lang === 'pt' ? 'Área de criativos' : 'Creative library' },
+    { href: '/portfoliodectvs/acesso', label: 'Acesso completo' },
     { href: '#processo', label: dict.nav.process },
     { href: '#contato', label: dict.nav.contact },
     { href: '#faq', label: dict.nav.faq },

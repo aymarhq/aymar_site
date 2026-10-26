@@ -4,7 +4,6 @@ import { portfolioOffers } from '../../lib/portfolio';
 import { getHiddenDriveVideoIds, getPortfolioVideoTitles } from '../../lib/portfolio-manifest';
 import { portfolioSession, uploadIsConfigured } from '../../lib/portfolio-auth';
 import PortfolioClient, { type LibraryOffer, type StoredVideo } from './portfolio-client';
-import PortfolioLogin from './portfolio-login';
 
 export const dynamic = 'force-dynamic';
 
@@ -32,7 +31,6 @@ async function getStoredVideos(): Promise<StoredVideo[]> {
 
 export default async function PortfolioPage() {
   const session = await portfolioSession();
-  if (!session) return <PortfolioLogin configured={Boolean(process.env.PORTFOLIO_ADMIN_PASSWORD || process.env.PORTFOLIO_STUDENT_PASSWORD)} />;
   const [uploads, hiddenDriveVideos, titles] = await Promise.all([getStoredVideos(), getHiddenDriveVideoIds(), getPortfolioVideoTitles()]);
   const hiddenIds = new Set(hiddenDriveVideos);
   const offers: LibraryOffer[] = portfolioOffers.map((offer) => {
@@ -61,5 +59,5 @@ export default async function PortfolioPage() {
     });
     return { slug: offer.slug, name: offer.name, market: offer.market, videos: [...uploadedVideos, ...driveVideos] };
   });
-  return <PortfolioClient offers={offers} uploadConfigured={uploadIsConfigured()} initialAdmin={session.role === 'admin'} initialUsername={session.username} />;
+  return <PortfolioClient offers={offers} uploadConfigured={uploadIsConfigured()} initialAdmin={session?.role === 'admin'} initialUsername={session?.role === 'admin' ? session.username : ''} />;
 }
