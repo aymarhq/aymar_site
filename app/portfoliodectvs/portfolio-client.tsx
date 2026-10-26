@@ -8,6 +8,7 @@ import { useRouter } from 'next/navigation';
 import { useEffect, useMemo, useState, type FormEvent } from 'react';
 import styles from './portfolio.module.css';
 import extras from './portfolio-extras.module.css';
+import playerStyles from './video-player.module.css';
 
 export type StoredVideo = { pathname: string; uploadedAt: string };
 export type LibraryVideo = { key: string; name: string; source: 'Drive' | 'Arquivo'; src: string; thumbnail?: string; driveIndex?: number; pathname?: string };
@@ -30,6 +31,7 @@ export default function PortfolioClient({ offers, uploadConfigured, initialAdmin
   const [selected, setSelected] = useState(offers[0].slug);
   const [query, setQuery] = useState('');
   const [active, setActive] = useState<Card | null>(null);
+  const [videoRatio, setVideoRatio] = useState(16 / 9);
   const [adminOpen, setAdminOpen] = useState(false);
   const [editing, setEditing] = useState<Card | null>(null);
   const [editedTitle, setEditedTitle] = useState('');
@@ -45,6 +47,11 @@ export default function PortfolioClient({ offers, uploadConfigured, initialAdmin
 
   const current = offers.find((offer) => offer.slug === selected) ?? offers[0];
   const cards = useMemo<Card[]>(() => current.videos.filter((item) => readableName(item.name).toLocaleLowerCase('pt-BR').includes(query.toLocaleLowerCase('pt-BR'))), [current, query]);
+
+  function openVideo(card: Card) {
+    setVideoRatio(16 / 9);
+    setActive(card);
+  }
 
   useEffect(() => {
     if (!adminOpen) return;
@@ -168,7 +175,7 @@ export default function PortfolioClient({ offers, uploadConfigured, initialAdmin
       </div>
       {notice && !adminOpen && <p className={styles.pageNotice} role="status">{notice}</p>}
       <div className={styles.grid}>{cards.map((card, index) => <article className={styles.card} key={card.key}>
-        <button className={styles.cardPreview} onClick={() => setActive(card)} aria-label={`Assistir ${readableName(card.name)}`}>
+        <button className={styles.cardPreview} onClick={() => openVideo(card)} aria-label={`Assistir ${readableName(card.name)}`}>
           <span className={styles.frame} style={card.thumbnail ? { backgroundImage: `linear-gradient(180deg, transparent 45%, rgba(0,0,0,.8)), url("${card.thumbnail}")` } : undefined}><span className={styles.play}><Play /></span><span className={styles.cardNumber}>{String(index + 1).padStart(2, '0')}</span></span>
         </button>
         <div className={styles.cardInfo}><strong>{readableName(card.name)}</strong><small>{card.source}</small></div>
@@ -178,7 +185,7 @@ export default function PortfolioClient({ offers, uploadConfigured, initialAdmin
     </section>
     <footer className={styles.footer}><span>© {new Date().getFullYear()} Aymar Labs</span><Link href="/">Voltar ao site <ArrowUpRight /></Link></footer>
 
-    {active && <div className={styles.overlay} onMouseDown={(event) => { if (event.target === event.currentTarget) setActive(null); }}><div className={styles.playerDialog} role="dialog" aria-modal="true" aria-label={readableName(active.name)}><div className={styles.dialogHead}><div><small>{current.name} / {active.source}</small><strong>{readableName(active.name)}</strong></div><button onClick={() => setActive(null)} aria-label="Fechar vídeo"><Close /></button></div><div className={styles.player}><video key={active.src} src={active.src} controls autoPlay playsInline preload="metadata" controlsList="nodownload noremoteplayback" disablePictureInPicture onContextMenu={(event) => event.preventDefault()} /></div></div></div>}
+    {active && <div className={styles.overlay} onMouseDown={(event) => { if (event.target === event.currentTarget) setActive(null); }}><div className={`${styles.playerDialog} ${playerStyles.dialog}`} role="dialog" aria-modal="true" aria-label={readableName(active.name)}><div className={`${styles.dialogHead} ${playerStyles.dialogHead}`}><div><small>{current.name} / {active.source}</small><strong>{readableName(active.name)}</strong></div><button onClick={() => setActive(null)} aria-label="Fechar vídeo"><Close /></button></div><div className={`${styles.player} ${playerStyles.stage}`} style={{ width: `min(calc((100dvh - 160px) * ${videoRatio}), calc(100vw - 40px))`, height: `min(calc(100dvh - 160px), calc((100vw - 40px) / ${videoRatio}))` }}><video key={active.src} src={active.src} controls autoPlay playsInline preload="metadata" controlsList="nodownload noremoteplayback" disablePictureInPicture onLoadedMetadata={(event) => { const { videoWidth, videoHeight } = event.currentTarget; if (videoWidth > 0 && videoHeight > 0) setVideoRatio(videoWidth / videoHeight); }} onContextMenu={(event) => event.preventDefault()} /></div></div></div>}
 
     {adminOpen && <div className={styles.overlay} onMouseDown={(event) => { if (event.target === event.currentTarget && !busy) setAdminOpen(false); }}><div className={styles.adminDialog} role="dialog" aria-modal="true" aria-label="Adicionar vídeos"><div className={styles.dialogHead}><div><small>ADMINISTRAÇÃO</small><strong>Adicionar vídeos</strong></div><button onClick={() => setAdminOpen(false)} disabled={busy} aria-label="Fechar"><Close /></button></div>
       {!uploadConfigured ? <p className={styles.adminText}>O envio de arquivos ainda não está conectado ao armazenamento neste ambiente.</p> : !authenticated ? <form onSubmit={signIn} className={styles.form}><p className={styles.adminText}>Entre com seu e-mail, username e senha de administração para enviar arquivos.</p><label>E-mail<input type="email" autoComplete="email" value={email} onChange={(event) => setEmail(event.target.value)} required /></label><label>Username<input type="text" autoComplete="nickname" placeholder="ex.: pablo.carmo" pattern="[A-Za-z0-9_.-]{3,24}" title="De 3 a 24 caracteres, sem espaços" value={username} onChange={(event) => setUsername(event.target.value)} required /></label><label>Senha<input type="password" autoComplete="current-password" value={password} onChange={(event) => setPassword(event.target.value)} required /></label><button type="submit" disabled={busy}>{busy ? 'Entrando...' : 'Entrar'}</button></form> : <form onSubmit={sendVideos} className={styles.form}><label>Oferta<select value={uploadOffer} onChange={(event) => setUploadOffer(event.target.value)}>{offers.map((offer) => <option value={offer.slug} key={offer.slug}>{offer.name} · {offer.market}</option>)}</select></label><label>Vídeos<input type="file" accept="video/mp4,video/quicktime,video/webm,video/x-m4v,.m4v" multiple onChange={(event) => setFiles(Array.from(event.target.files ?? []))} /></label><p className={styles.adminText}>MP4, MOV ou WebM. Até 1 GB por arquivo. Os novos vídeos ficam armazenados neste portfólio, separados por oferta.</p>{busy && <div className={styles.progress}><span style={{ width: `${progress}%` }} /></div>}<button type="submit" disabled={busy || !files.length}>{busy ? `Enviando ${progress}%` : `Adicionar ${files.length || ''} ${files.length === 1 ? 'vídeo' : 'vídeos'}`}</button></form>}
