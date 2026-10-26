@@ -32,6 +32,7 @@ export default function PortfolioClient({ offers, uploadConfigured, initialAdmin
   const router = useRouter();
   const [selected, setSelected] = useState(offers[0].slug);
   const [query, setQuery] = useState('');
+  const [selectedVideoKeys, setSelectedVideoKeys] = useState<string[]>([]);
   const [active, setActive] = useState<Card | null>(null);
   const [videoRatio, setVideoRatio] = useState(16 / 9);
   const [adminOpen, setAdminOpen] = useState(false);
@@ -121,6 +122,68 @@ export default function PortfolioClient({ offers, uploadConfigured, initialAdmin
     } finally { setBusy(false); }
   }
 
+  function toggleVideoSelection(key: string) {
+    setSelectedVideoKeys((currentKeys) => currentKeys.includes(key)
+      ? currentKeys.filter((currentKey) => currentKey !== key)
+      : [...currentKeys, key]);
+  }
+
+  async function removeSelectedVideos() {
+    const selectedCards = cards.filter((card) => selectedVideoKeys.includes(card.key));
+    if (!selectedCards.length) return;
+    const confirmed = window.confirm(
+      `Remover ${selectedCards.length} vídeo(s) selecionado(s) desta biblioteca? Os originais do Drive serão preservados; arquivos enviados ao portfólio serão excluídos.`
+    );
+    if (!confirmed) return;
+
+    setBusy(true);
+    setNotice('');
+    let removed = 0;
+    const groups: { body: Record<string, unknown>; count: number }[] = [];
+    const driveCards = selectedCards.filter((card) => card.source === 'Drive');
+    const uploadedCards = selectedCards.filter((card) => card.source === 'Arquivo');
+    const indices = driveCards.map((card) => card.driveIndex);
+    const pathnames = uploadedCards.map((card) => card.pathname);
+
+    if (driveCards.length) {
+      if (indices.some((index) => typeof index !== 'number')) {
+        setBusy(false);
+        setNotice('Não foi possível identificar um dos vídeos selecionados.');
+        return;
+      }
+      groups.push({ body: { source: 'drive', offer: current.slug, indices }, count: driveCards.length });
+    }
+    if (uploadedCards.length) {
+      if (pathnames.some((pathname) => typeof pathname !== 'string')) {
+        setBusy(false);
+        setNotice('Não foi possível identificar um dos vídeos selecionados.');
+        return;
+      }
+      groups.push({ body: { source: 'upload', pathnames }, count: uploadedCards.length });
+    }
+
+    try {
+      for (const group of groups) {
+        const response = await fetch('/api/portfolio/delete', {
+          method: 'DELETE',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(group.body),
+        });
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.error || 'Não foi possível remover os vídeos selecionados.');
+        removed += typeof data.deleted === 'number' ? data.deleted : group.count;
+      }
+      setNotice(`${removed} vídeo(s) removido(s) da biblioteca.`);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Falha ao remover os vídeos selecionados.';
+      setNotice(removed ? `${removed} vídeo(s) removido(s). O restante não foi removido: ${message}` : message);
+    } finally {
+      setSelectedVideoKeys([]);
+      router.refresh();
+      setBusy(false);
+    }
+  }
+
   function beginEdit(card: Card) {
     setEditing(card);
     setEditedTitle(readableName(card.name));
@@ -152,7 +215,7 @@ export default function PortfolioClient({ offers, uploadConfigured, initialAdmin
     <header className={styles.header}>
       <BrandLogo size="sm" className={styles.logo} href="/" label="Aymar Labs, página inicial" />
       <span className={styles.headerLabel}>Biblioteca de criativos</span>
-      <div className={extras.headerActions}><Link className={extras.fullAccess} href="/portfoliodectvs/acesso">Acesso completo <ArrowUpRight /></Link>{authenticated && <><span className={extras.username}>@{username}</span><button className={styles.adminButton} onClick={() => { setUploadOffer(selected); setNotice(''); setAdminOpen(true); }}>+ Adicionar vídeo</button><button className={extras.signOut} onClick={async () => { await fetch('/api/portfolio/session', { method: 'DELETE' }); router.refresh(); }}>Sair</button></>}</div>
+      <div className={extras.headerActions}><Link className={extras.fullAccess} href="/portfoliodectvs/acesso">Acesso completo <ArrowUpRight /></Link>{authenticated && <><span className={extras.username}>@{username}</span><button className={styles.adminButton} onClick={() => { setUploadOffer(selected); setNotice(''); setAdminOpen(true); }}>+ Adicionar vídeo</button><button className={extras.signOut} onClick={async () => { await fetch('/api/portfolio/session', { method: 'DELETE' }); setAuthenticated(false); setUsername(''); setSelectedVideoKeys([]); router.refresh(); }}>Sair</button></>}</div>
     </header>
 
     <section className={styles.hero}>
@@ -162,7 +225,7 @@ export default function PortfolioClient({ offers, uploadConfigured, initialAdmin
     </section>
 
     <nav className={`${styles.offers} ${extras.offerNav}`} aria-label="Ofertas">
-      {offers.map((offer, index) => <button key={offer.slug} className={`${styles.offer} ${selected === offer.slug ? styles.offerActive : ''}`} onClick={() => { setSelected(offer.slug); setQuery(''); }} aria-current={selected === offer.slug ? 'page' : undefined}>
+      {offers.map((offer, index) => <button key={offer.slug} className={`${styles.offer} ${selected === offer.slug ? styles.offerActive : ''}`} onClick={() => { setSelected(offer.slug); setQuery(''); setSelectedVideoKeys([]); }} aria-current={selected === offer.slug ? 'page' : undefined}>
         <span className={styles.offerIndex}>{String(index + 1).padStart(2, '0')}</span>
         <strong>{offer.name}</strong>
         <span className={styles.market}>{offer.market}</span>
@@ -173,10 +236,17 @@ export default function PortfolioClient({ offers, uploadConfigured, initialAdmin
     <section className={styles.gallery}>
       <div className={styles.galleryHead}>
         <div><span className={styles.sectionLabel}>OFERTA / {current.market}</span><h2>{current.name}<span>.</span></h2></div>
-      <div className={styles.tools}><input aria-label="Buscar vídeo nesta oferta" placeholder="Buscar vídeo..." value={query} onChange={(event) => setQuery(event.target.value)} /></div>
+        <div className={styles.tools}><input aria-label="Buscar vídeo nesta oferta" placeholder="Buscar vídeo..." value={query} onChange={(event) => { setQuery(event.target.value); setSelectedVideoKeys([]); }} /></div>
       </div>
       {notice && !adminOpen && <p className={styles.pageNotice} role="status">{notice}</p>}
+      {authenticated && cards.length > 0 && <div className={styles.bulkActions}>
+        <span>{selectedVideoKeys.length} selecionado(s)</span>
+        <button type="button" onClick={() => setSelectedVideoKeys(cards.map((card) => card.key))} disabled={busy || selectedVideoKeys.length === cards.length}>Selecionar todos</button>
+        <button type="button" onClick={() => setSelectedVideoKeys([])} disabled={busy || selectedVideoKeys.length === 0}>Limpar seleção</button>
+        <button type="button" onClick={removeSelectedVideos} disabled={busy || selectedVideoKeys.length === 0}>Remover selecionados</button>
+      </div>}
       <div className={styles.grid}>{cards.map((card, index) => <article className={styles.card} key={card.key}>
+        {authenticated && <label className={styles.cardSelect} onClick={(event) => event.stopPropagation()}><input type="checkbox" checked={selectedVideoKeys.includes(card.key)} onChange={() => toggleVideoSelection(card.key)} disabled={busy} aria-label={`Selecionar ${readableName(card.name)}`} /><span>Selecionar</span></label>}
         <button className={styles.cardPreview} onClick={() => openVideo(card)} aria-label={`Assistir ${readableName(card.name)}`}>
           <span className={`${styles.frame} ${playStyles.frame}`} style={card.thumbnail ? { backgroundImage: `linear-gradient(180deg, transparent 45%, rgba(0,0,0,.8)), url("${card.thumbnail}")` } : undefined}><span className={`${styles.play} ${playStyles.play}`}><Image src="/portfolio-play.svg" alt="" width={64} height={64} draggable={false} /></span><span className={styles.cardNumber}>{String(index + 1).padStart(2, '0')}</span></span>
         </button>
