@@ -1,13 +1,15 @@
 'use client';
 
 import { upload } from '@vercel/blob/client';
+import Image from 'next/image';
 import Link from 'next/link';
 import BrandLogo from '../../components/BrandLogo';
-import { ArrowUpRight, Close, Play } from '../../components/Icon';
+import { ArrowUpRight, Close } from '../../components/Icon';
 import { useRouter } from 'next/navigation';
 import { useEffect, useMemo, useState, type FormEvent } from 'react';
 import styles from './portfolio.module.css';
 import extras from './portfolio-extras.module.css';
+import playStyles from './portfolio-play.module.css';
 import playerStyles from './video-player.module.css';
 
 export type StoredVideo = { pathname: string; uploadedAt: string };
@@ -176,7 +178,7 @@ export default function PortfolioClient({ offers, uploadConfigured, initialAdmin
       {notice && !adminOpen && <p className={styles.pageNotice} role="status">{notice}</p>}
       <div className={styles.grid}>{cards.map((card, index) => <article className={styles.card} key={card.key}>
         <button className={styles.cardPreview} onClick={() => openVideo(card)} aria-label={`Assistir ${readableName(card.name)}`}>
-          <span className={styles.frame} style={card.thumbnail ? { backgroundImage: `linear-gradient(180deg, transparent 45%, rgba(0,0,0,.8)), url("${card.thumbnail}")` } : undefined}><span className={styles.play}><Play /></span><span className={styles.cardNumber}>{String(index + 1).padStart(2, '0')}</span></span>
+          <span className={`${styles.frame} ${playStyles.frame}`} style={card.thumbnail ? { backgroundImage: `linear-gradient(180deg, transparent 45%, rgba(0,0,0,.8)), url("${card.thumbnail}")` } : undefined}><span className={`${styles.play} ${playStyles.play}`}><Image src="/portfolio-play.svg" alt="" width={64} height={64} draggable={false} /></span><span className={styles.cardNumber}>{String(index + 1).padStart(2, '0')}</span></span>
         </button>
         <div className={styles.cardInfo}><strong>{readableName(card.name)}</strong><small>{card.source}</small></div>
         {authenticated && <div className={extras.cardActions}><button className={extras.editVideo} onClick={() => beginEdit(card)} disabled={busy}>Editar título</button><button className={extras.removeVideo} onClick={() => removeVideo(card)} disabled={busy}>Remover</button></div>}
