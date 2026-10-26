@@ -424,17 +424,28 @@ main#top>.studio.copy-benefits{display:block;order:3;min-height:0}
 .benefit-grid article+article{padding-left:22px;border-left:1px solid var(--paperline)}
 .benefit-grid h3{font-size:clamp(19px,2vw,28px);line-height:1.05;letter-spacing:-.055em}
 .benefit-grid p{max-width:270px;margin-top:18px;color:#555;font-size:14px;line-height:1.48}
-.avatar-callout{display:grid;grid-template-columns:1.15fr 1fr;gap:8vw;align-items:end;margin-top:58px;padding:42px 48px 46px;background:var(--ink);color:var(--paper)}
-.avatar-callout span{display:block;margin-bottom:22px;color:var(--accent);font:10px 'JetBrains Mono',monospace;text-transform:uppercase;letter-spacing:.1em}
-.avatar-callout h3{max-width:610px;font-size:clamp(28px,3.2vw,48px);line-height:1.04;letter-spacing:-.065em}
-.avatar-callout p{max-width:410px;color:rgba(245,244,239,.75);font-size:15px;line-height:1.5}
-.avatar-callout a{display:inline-flex;align-items:center;gap:8px;margin-top:26px;border-bottom:1px solid var(--accent);padding-bottom:7px;font:11px 'JetBrains Mono',monospace;text-transform:uppercase;letter-spacing:.02em}
-.avatar-callout a .ui-icon{width:16px;height:16px;margin:0}
-.avatar-callout a:hover,.avatar-callout a:focus-visible{color:var(--accent);outline:none}
+.avatar-showcase{display:grid;grid-template-columns:minmax(260px,.82fr) minmax(0,1.18fr);gap:clamp(32px,5vw,76px);align-items:center;margin-top:58px;padding:clamp(30px,4vw,58px);background:var(--ink);color:var(--paper)}
+.avatar-showcase-copy>span{display:block;margin-bottom:22px;color:var(--accent);font:10px 'JetBrains Mono',monospace;text-transform:uppercase;letter-spacing:.1em}
+.avatar-showcase-copy h3{max-width:490px;font-size:clamp(32px,3.6vw,52px);line-height:1.03;letter-spacing:-.065em}
+.avatar-showcase-copy>p{max-width:470px;margin-top:22px;color:rgba(245,244,239,.72);font-size:15px;line-height:1.55}
+.avatar-showcase-copy ul{display:grid;gap:12px;margin-top:24px;padding:0;list-style:none}
+.avatar-showcase-copy li{display:flex;align-items:flex-start;gap:10px;color:rgba(245,244,239,.88);font-size:14px;line-height:1.45}
+.avatar-showcase-copy li i{display:flex;flex:none;align-items:center;justify-content:center;width:18px;height:18px;border-radius:50%;background:rgba(0,132,255,.2);color:var(--accent);font-size:11px;font-style:normal;font-weight:700}
+.avatar-showcase-copy a{display:inline-flex;align-items:center;gap:8px;margin-top:28px;border-bottom:1px solid var(--accent);padding-bottom:7px;font:11px 'JetBrains Mono',monospace;text-transform:uppercase;letter-spacing:.02em}
+.avatar-showcase-copy a .ui-icon{width:16px;height:16px;margin:0}
+.avatar-showcase-copy a:hover,.avatar-showcase-copy a:focus-visible{color:var(--accent);outline:none}
+.avatar-showcase-gallery{min-width:0;margin:0}
+.avatar-gallery-angle-cards,.avatar-gallery-other-cards{display:grid;gap:10px}
+.avatar-gallery-angle-cards{grid-template-columns:repeat(4,minmax(0,1fr))}
+.avatar-gallery-other-cards{grid-template-columns:repeat(3,minmax(0,1fr));max-width:75%}
+.avatar-showcase-gallery img{display:block;width:100%;height:auto;aspect-ratio:5/7;object-fit:cover;border-radius:12px;background:#0785ff}
+.avatar-showcase-gallery figcaption{margin-top:8px;color:#787b82;font-size:11px;line-height:1.4}
+.avatar-gallery-others{margin-top:18px}
 .videos .proof-strip strong{font-size:clamp(25px,4vw,52px);letter-spacing:-.065em}
 @media(max-width:900px){.benefit-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.benefit-grid article:nth-child(3){padding-left:0;border-left:0;border-top:1px solid var(--paperline)}.benefit-grid article:nth-child(4){border-top:1px solid var(--paperline)}}
 @media(max-width:719px){.copy-benefits .benefits-intro{margin-top:60px}.copy-benefits .benefits-intro>p{padding:0;margin-top:34px;font-size:16px}.benefit-grid{margin-top:55px}.benefit-grid article{padding:20px 12px 25px 0}.benefit-grid article+article{padding-left:12px}.benefit-grid article:nth-child(3){padding-left:0}.benefit-grid h3{font-size:20px}.benefit-grid p{margin-top:13px;font-size:12px}.videos .proof-strip strong{font-size:clamp(16px,5.3vw,24px)}.videos .proof-strip span{white-space:normal;line-height:1.35}}
-@media(max-width:719px){.avatar-callout{display:block;margin-top:38px;padding:32px 25px 36px}.avatar-callout h3{font-size:clamp(30px,8vw,40px)}.avatar-callout p{margin-top:24px;font-size:14px}.avatar-callout a{font-size:9px;line-height:1.5}}
+@media(max-width:900px){.avatar-showcase{grid-template-columns:1fr;gap:30px}.avatar-showcase-copy h3{max-width:620px}.avatar-gallery-other-cards{max-width:78%}}
+@media(max-width:719px){.avatar-showcase{display:block;margin-top:38px;padding:30px 22px 25px}.avatar-showcase-copy>span{margin-bottom:18px}.avatar-showcase-copy h3{font-size:clamp(30px,8vw,40px)}.avatar-showcase-copy>p{margin-top:20px;font-size:14px}.avatar-showcase-copy ul{gap:10px;margin-top:20px}.avatar-showcase-copy li{font-size:13px}.avatar-showcase-copy a{font-size:9px;line-height:1.5}.avatar-showcase-gallery{margin-top:32px}.avatar-gallery-angle-cards{grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.avatar-gallery-other-cards{max-width:none;gap:8px}.avatar-showcase-gallery figcaption{font-size:10px}}
 
 /* Keep the copyright in its own row, with room for every footer column. */
 .footer{min-height:300px;align-content:space-between;row-gap:52px;padding-top:72px;padding-bottom:42px}
@@ -460,13 +471,11 @@ main#top>.studio.copy-benefits{display:block;order:3;min-height:0}
 /* The Aymar mark is a brand signature, distinct from action icons. */
 .brand-mark{display:block;flex:none;width:100%;height:auto}
 .hero-brand-mark{position:absolute;left:5.5vw;bottom:16px;width:50px;color:inherit}
-.avatar-callout{position:relative}
-.avatar-brand-mark{position:absolute;top:27px;right:30px;width:60px;color:var(--paper)}
 .faq-heading{display:flex;align-items:flex-start;justify-content:space-between;gap:30px;margin:80px 0 78px}
 .faq-heading h2{margin:0}
 .faq-brand-mark{width:112px;margin-top:-12px;color:var(--ink)}
 .footer>div:last-of-type::after{content:"";display:block;width:50px;height:50px;margin-top:18px;background:url('/brand/aymar-mark.svg') center/contain no-repeat}
-@media(max-width:719px){.hero-brand-mark{left:6vw;bottom:10px;width:42px}.avatar-brand-mark{top:22px;right:20px;width:42px}.faq-heading{margin:58px 0 58px;gap:10px}.faq-heading h2{font-size:clamp(39px,10vw,58px)}.faq-brand-mark{width:64px;margin-top:-6px}.footer>div:last-of-type::after{width:42px;height:42px;margin-top:14px}}
+@media(max-width:719px){.hero-brand-mark{left:6vw;bottom:10px;width:42px}.faq-heading{margin:58px 0 58px;gap:10px}.faq-heading h2{font-size:clamp(39px,10vw,58px)}.faq-brand-mark{width:64px;margin-top:-6px}.footer>div:last-of-type::after{width:42px;height:42px;margin-top:14px}}
 
 /* Keep the contact CTA and its response note as one centered visual unit. */
 .contact-whatsapp{text-transform:uppercase;text-align:center}

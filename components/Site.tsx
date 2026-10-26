@@ -160,7 +160,29 @@ function CopyBenefitsSection({ dict }: { dict: Dict }) {
     <div className="eyebrow">{dict.studio.eyebrow}</div>
     <div className="two-col benefits-intro"><h2>{dict.studio.title}<br /><em>{dict.studio.emphasis}</em></h2><p>{dict.studio.paragraph}</p></div>
     <div className="benefit-grid">{dict.studio.benefits.map(item => <article key={item.title}><h3>{item.title}</h3><p>{item.text}</p></article>)}</div>
-    <div className="avatar-callout"><BrandMark className="avatar-brand-mark" /><div><span>{dict.studio.avatar.eyebrow}</span><h3>{dict.studio.avatar.title}</h3></div><div><p>{dict.studio.avatar.paragraph}</p><a href="#contato">{dict.studio.avatar.cta}<ArrowUpRight /></a></div></div>
+    <div className="avatar-showcase">
+      <div className="avatar-showcase-copy">
+        <span>{dict.studio.avatar.eyebrow}</span>
+        <h3>{dict.studio.avatar.title}</h3>
+        <p>{dict.studio.avatar.paragraph}</p>
+        <ul>{dict.studio.avatar.features.map(feature => <li key={feature}><i aria-hidden="true">✓</i><span>{feature}</span></li>)}</ul>
+        <a href="#contato">{dict.studio.avatar.cta}<ArrowUpRight /></a>
+      </div>
+      <figure className="avatar-showcase-gallery">
+        <div className="avatar-gallery-group">
+          <div className="avatar-gallery-angle-cards" aria-label={dict.studio.avatar.galleryAngleCaption}>
+            {dict.studio.avatar.galleryAnglesAlt.map((alt, index) => <Image key={alt} src={`/avatars/avatar-angle-${index + 1}.jpg`} alt={alt} width={320} height={448} sizes="(max-width: 719px) 42vw, (max-width: 900px) 20vw, 13vw" />)}
+          </div>
+          <figcaption>{dict.studio.avatar.galleryAngleCaption}</figcaption>
+        </div>
+        <div className="avatar-gallery-group avatar-gallery-others">
+          <div className="avatar-gallery-other-cards" aria-label={dict.studio.avatar.galleryOtherCaption}>
+            {dict.studio.avatar.galleryOthersAlt.map((alt, index) => <Image key={alt} src={`/avatars/avatar-character-${index + 1}.jpg`} alt={alt} width={320} height={454} sizes="(max-width: 719px) 30vw, (max-width: 900px) 30vw, 20vw" />)}
+          </div>
+          <figcaption>{dict.studio.avatar.galleryOtherCaption}</figcaption>
+        </div>
+      </figure>
+    </div>
   </section>;
 }
 
