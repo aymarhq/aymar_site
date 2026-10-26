@@ -6,12 +6,13 @@ import BrandLogo from '../../components/BrandLogo';
 import { ArrowUpRight, Close, Play } from '../../components/Icon';
 import { useRouter } from 'next/navigation';
 import { useEffect, useMemo, useState, type FormEvent } from 'react';
-import type { PortfolioOffer } from '../../lib/portfolio';
 import styles from './portfolio.module.css';
 import extras from './portfolio-extras.module.css';
 
-export type StoredVideo = { pathname: string; url: string; uploadedAt: string };
-type Card = { key: string; name: string; source: 'Drive' | 'Arquivo'; src: string; thumbnail?: string; external: string };
+export type StoredVideo = { pathname: string; uploadedAt: string };
+export type LibraryVideo = { key: string; name: string; source: 'Drive' | 'Arquivo'; src: string; thumbnail?: string; driveIndex?: number; pathname?: string };
+export type LibraryOffer = { slug: string; name: string; market: 'BR' | 'MX'; videos: LibraryVideo[] };
+type Card = LibraryVideo;
 
 function readableName(name: string) {
   return name.replace(/^\d{13}-/, '').replace(/-[a-zA-Z0-9]{8,}(?=\.)/, '').replace(/\.[^.]+$/, '').replace(/[_-]+/g, ' ');
@@ -24,13 +25,14 @@ function safeFileName(name: string) {
   return `${base || 'video'}.${extension}`;
 }
 
-export default function PortfolioClient({ offers, uploads, uploadConfigured, initialAdmin, initialUsername }: { offers: PortfolioOffer[]; uploads: StoredVideo[]; uploadConfigured: boolean; initialAdmin: boolean; initialUsername: string }) {
+export default function PortfolioClient({ offers, uploadConfigured, initialAdmin, initialUsername }: { offers: LibraryOffer[]; uploadConfigured: boolean; initialAdmin: boolean; initialUsername: string }) {
   const router = useRouter();
   const [selected, setSelected] = useState(offers[0].slug);
   const [query, setQuery] = useState('');
   const [active, setActive] = useState<Card | null>(null);
-  const [selectedCards, setSelectedCards] = useState<string[]>([]);
   const [adminOpen, setAdminOpen] = useState(false);
+  const [editing, setEditing] = useState<Card | null>(null);
+  const [editedTitle, setEditedTitle] = useState('');
   const [authenticated, setAuthenticated] = useState(initialAdmin);
   const [email, setEmail] = useState('');
   const [username, setUsername] = useState(initialUsername);
@@ -42,13 +44,7 @@ export default function PortfolioClient({ offers, uploads, uploadConfigured, ini
   const [notice, setNotice] = useState('');
 
   const current = offers.find((offer) => offer.slug === selected) ?? offers[0];
-  const uploadCounts = useMemo(() => Object.fromEntries(offers.map((offer) => [offer.slug, uploads.filter((item) => item.pathname.startsWith(`portfolio/${offer.slug}/`)).length])), [offers, uploads]);
-  const cards = useMemo<Card[]>(() => {
-    const drive = current.videos.map(({ id, name }) => ({ key: `drive-${id}`, name, source: 'Drive' as const, src: `https://drive.google.com/file/d/${id}/preview`, thumbnail: `https://drive.google.com/thumbnail?id=${id}&sz=w600`, external: `https://drive.google.com/file/d/${id}/view` }));
-    const stored = uploads.filter((item) => item.pathname.startsWith(`portfolio/${current.slug}/`)).map((item) => ({ key: `blob-${item.pathname}`, name: item.pathname.split('/').at(-1) ?? 'Vídeo', source: 'Arquivo' as const, src: item.url, external: item.url }));
-    return [...stored, ...drive].filter((item) => readableName(item.name).toLocaleLowerCase('pt-BR').includes(query.toLocaleLowerCase('pt-BR')));
-  }, [current, query, uploads]);
-  const selectedVisibleCards = cards.filter((card) => selectedCards.includes(card.key));
+  const cards = useMemo<Card[]>(() => current.videos.filter((item) => readableName(item.name).toLocaleLowerCase('pt-BR').includes(query.toLocaleLowerCase('pt-BR'))), [current, query]);
 
   useEffect(() => {
     if (!adminOpen) return;
@@ -56,11 +52,11 @@ export default function PortfolioClient({ offers, uploads, uploadConfigured, ini
   }, [adminOpen]);
 
   useEffect(() => {
-    if (!active && !adminOpen) return;
-    const onKey = (event: KeyboardEvent) => { if (event.key === 'Escape') { setActive(null); setAdminOpen(false); } };
+    if (!active && !adminOpen && !editing) return;
+    const onKey = (event: KeyboardEvent) => { if (event.key === 'Escape') { setActive(null); setAdminOpen(false); setEditing(null); } };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [active, adminOpen]);
+  }, [active, adminOpen, editing]);
 
   async function signIn(event: FormEvent<HTMLFormElement>) {
     event.preventDefault(); setNotice(''); setBusy(true);
@@ -83,7 +79,7 @@ export default function PortfolioClient({ offers, uploads, uploadConfigured, ini
         if (!['video/mp4', 'video/quicktime', 'video/webm', 'video/x-m4v'].includes(file.type)) throw new Error(`${file.name}: use MP4, MOV ou WebM.`);
         if (file.size > 1024 * 1024 * 1024) throw new Error(`${file.name}: o limite é 1 GB por vídeo.`);
         await upload(`portfolio/${uploadOffer}/${Date.now()}-${safeFileName(file.name)}`, file, {
-          access: 'public', handleUploadUrl: '/api/portfolio/upload', multipart: file.size > 100 * 1024 * 1024,
+          access: 'private', handleUploadUrl: '/api/portfolio/upload', multipart: file.size > 100 * 1024 * 1024,
           onUploadProgress: ({ percentage }) => setProgress(Math.round(((i + percentage / 100) / files.length) * 100)),
         });
       }
@@ -104,7 +100,7 @@ export default function PortfolioClient({ offers, uploads, uploadConfigured, ini
       const response = await fetch('/api/portfolio/delete', {
         method: 'DELETE',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(isDriveVideo ? { source: 'drive', id: card.key.slice('drive-'.length) } : { source: 'upload', pathname: card.key.slice('blob-'.length) }),
+        body: JSON.stringify(isDriveVideo ? { source: 'drive', offer: current.slug, index: card.driveIndex } : { source: 'upload', pathname: card.pathname }),
       });
       const data = await response.json();
       if (!response.ok) throw new Error(data.error || 'Não foi possível remover o vídeo.');
@@ -116,64 +112,31 @@ export default function PortfolioClient({ offers, uploads, uploadConfigured, ini
     } finally { setBusy(false); }
   }
 
-  function toggleCardSelection(key: string) {
-    setSelectedCards((selection) => selection.includes(key) ? selection.filter((item) => item !== key) : [...selection, key]);
+  function beginEdit(card: Card) {
+    setEditing(card);
+    setEditedTitle(readableName(card.name));
+    setNotice('');
   }
 
-  function toggleAllVisibleCards() {
-    const allVisibleAreSelected = cards.length > 0 && cards.every((card) => selectedCards.includes(card.key));
-    setSelectedCards((selection) => allVisibleAreSelected
-      ? selection.filter((key) => !cards.some((card) => card.key === key))
-      : Array.from(new Set([...selection, ...cards.map((card) => card.key)])));
-  }
-
-  function downloadSelected() {
-    for (const card of selectedVisibleCards) {
-      const params = new URLSearchParams(card.source === 'Drive'
-        ? { source: 'drive', id: card.key.slice('drive-'.length) }
-        : { source: 'upload', pathname: card.key.slice('blob-'.length) });
-      const anchor = document.createElement('a');
-      anchor.href = `/api/portfolio/download?${params.toString()}`;
-      anchor.download = safeFileName(card.name);
-      anchor.style.display = 'none';
-      document.body.appendChild(anchor);
-      anchor.click();
-      anchor.remove();
-    }
-    setNotice(`${selectedVisibleCards.length} download${selectedVisibleCards.length === 1 ? '' : 's'} iniciado${selectedVisibleCards.length === 1 ? '' : 's'}. Se o navegador pedir, permita vários downloads.`);
-  }
-
-  async function removeSelected() {
-    const selectedUploads = selectedVisibleCards.filter((card) => card.source === 'Arquivo');
-    const selectedDriveVideos = selectedVisibleCards.filter((card) => card.source === 'Drive');
-    const warning = selectedUploads.length && selectedDriveVideos.length
-      ? `Remover ${selectedVisibleCards.length} vídeos? Os ${selectedUploads.length} enviados serão excluídos do armazenamento; os ${selectedDriveVideos.length} do Drive apenas sairão do portfólio e continuarão nas pastas originais.`
-      : selectedDriveVideos.length
-        ? `Remover ${selectedDriveVideos.length} vídeos do portfólio? Os arquivos originais continuarão nas pastas do Drive.`
-        : `Excluir ${selectedUploads.length} vídeos do armazenamento do portfólio? Essa ação não pode ser desfeita.`;
-    if (!selectedVisibleCards.length || !window.confirm(warning)) return;
+  async function saveTitle(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (!editing || editedTitle.trim().length > 100) return;
     setBusy(true); setNotice('');
     try {
-      let deleted = 0;
-      if (selectedDriveVideos.length) {
-        const response = await fetch('/api/portfolio/delete', { method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ source: 'drive', ids: selectedDriveVideos.map((card) => card.key.slice('drive-'.length)) }) });
-        const data = await response.json();
-        if (!response.ok) throw new Error(data.error || 'Não foi possível remover os vídeos do Drive.');
-        deleted += data.deleted;
-      }
-      if (selectedUploads.length) {
-        const response = await fetch('/api/portfolio/delete', { method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ source: 'upload', pathnames: selectedUploads.map((card) => card.key.slice('blob-'.length)) }) });
-        const data = await response.json();
-        if (!response.ok) throw new Error(data.error || 'Não foi possível excluir os vídeos enviados.');
-        deleted += data.deleted;
-      }
-      setSelectedCards([]);
-      setNotice(`${deleted} ${deleted === 1 ? 'vídeo removido' : 'vídeos removidos'} com sucesso.`);
+      const response = await fetch('/api/portfolio/edit', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(editing.source === 'Drive'
+          ? { source: 'drive', offer: current.slug, index: editing.driveIndex, title: editedTitle }
+          : { source: 'upload', pathname: editing.pathname, title: editedTitle }),
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || 'Não foi possível editar este vídeo.');
+      setNotice('Título atualizado.');
+      setEditing(null);
       router.refresh();
-    } catch (error) {
-      setNotice(error instanceof Error ? error.message : 'Não foi possível remover os vídeos selecionados.');
-      router.refresh();
-    } finally { setBusy(false); }
+    } catch (error) { setNotice(error instanceof Error ? error.message : 'Não foi possível editar este vídeo.'); }
+    finally { setBusy(false); }
   }
 
   return <main className={styles.page}>
@@ -186,45 +149,42 @@ export default function PortfolioClient({ offers, uploads, uploadConfigured, ini
     <section className={styles.hero}>
       <div className={styles.eyebrow}><span className={styles.blueDot} /> AYMAR LABS / PORTFÓLIO DE CTVS</div>
       <h1>Ideias que <em>viraram vídeo.</em></h1>
-      <div className={styles.heroBottom}><p>Criativos organizados por oferta. Escolha uma campanha para explorar as peças.</p><span>{String(offers.length).padStart(2, '0')} OFERTAS <i /> {String(offers.reduce((sum, offer) => sum + offer.videos.length, uploads.length)).padStart(2, '0')} VÍDEOS</span></div>
+      <div className={styles.heroBottom}><p>Criativos organizados por oferta. Escolha uma campanha para explorar as peças.</p><span>{String(offers.length).padStart(2, '0')} OFERTAS <i /> {String(offers.reduce((sum, offer) => sum + offer.videos.length, 0)).padStart(2, '0')} VÍDEOS</span></div>
     </section>
 
     <nav className={`${styles.offers} ${extras.offerNav}`} aria-label="Ofertas">
-      {offers.map((offer, index) => <button key={offer.slug} className={`${styles.offer} ${selected === offer.slug ? styles.offerActive : ''}`} onClick={() => { setSelected(offer.slug); setQuery(''); setSelectedCards([]); }} aria-current={selected === offer.slug ? 'page' : undefined}>
+      {offers.map((offer, index) => <button key={offer.slug} className={`${styles.offer} ${selected === offer.slug ? styles.offerActive : ''}`} onClick={() => { setSelected(offer.slug); setQuery(''); }} aria-current={selected === offer.slug ? 'page' : undefined}>
         <span className={styles.offerIndex}>{String(index + 1).padStart(2, '0')}</span>
         <strong>{offer.name}</strong>
         <span className={styles.market}>{offer.market}</span>
-        <span className={styles.offerCount}>{offer.videos.length + (uploadCounts[offer.slug] ?? 0)}</span>
+        <span className={styles.offerCount}>{offer.videos.length}</span>
       </button>)}
     </nav>
 
     <section className={styles.gallery}>
       <div className={styles.galleryHead}>
         <div><span className={styles.sectionLabel}>OFERTA / {current.market}</span><h2>{current.name}<span>.</span></h2></div>
-      <div className={styles.tools}><input aria-label="Buscar vídeo nesta oferta" placeholder="Buscar vídeo..." value={query} onChange={(event) => setQuery(event.target.value)} />{authenticated && <a href={`https://drive.google.com/drive/folders/${current.folderId}`} target="_blank" rel="noopener noreferrer">Abrir pasta no Drive <ArrowUpRight /></a>}</div>
+      <div className={styles.tools}><input aria-label="Buscar vídeo nesta oferta" placeholder="Buscar vídeo..." value={query} onChange={(event) => setQuery(event.target.value)} /></div>
       </div>
       {notice && !adminOpen && <p className={styles.pageNotice} role="status">{notice}</p>}
-      <div className={styles.bulkActions}>
-        <button type="button" onClick={toggleAllVisibleCards} disabled={!cards.length}>{cards.length > 0 && cards.every((card) => selectedCards.includes(card.key)) ? 'Desmarcar visíveis' : `Selecionar visíveis (${cards.length})`}</button>
-        {selectedVisibleCards.length > 0 && <><span>{selectedVisibleCards.length} selecionado{selectedVisibleCards.length === 1 ? '' : 's'}</span><button type="button" onClick={downloadSelected}>Baixar selecionados</button>{authenticated && <button type="button" onClick={removeSelected} disabled={busy}>Remover selecionados</button>}</>}
-      </div>
       <div className={styles.grid}>{cards.map((card, index) => <article className={styles.card} key={card.key}>
-        <label className={styles.cardSelect} aria-label={`Selecionar ${readableName(card.name)}`}><input type="checkbox" checked={selectedCards.includes(card.key)} onChange={() => toggleCardSelection(card.key)} /><span>Selecionar</span></label>
         <button className={styles.cardPreview} onClick={() => setActive(card)} aria-label={`Assistir ${readableName(card.name)}`}>
           <span className={styles.frame} style={card.thumbnail ? { backgroundImage: `linear-gradient(180deg, transparent 45%, rgba(0,0,0,.8)), url("${card.thumbnail}")` } : undefined}><span className={styles.play}><Play /></span><span className={styles.cardNumber}>{String(index + 1).padStart(2, '0')}</span></span>
         </button>
         <div className={styles.cardInfo}><strong>{readableName(card.name)}</strong><small>{card.source}</small></div>
-        {authenticated && <button className={extras.removeVideo} onClick={() => removeVideo(card)} disabled={busy}>Remover</button>}
+        {authenticated && <div className={extras.cardActions}><button className={extras.editVideo} onClick={() => beginEdit(card)} disabled={busy}>Editar título</button><button className={extras.removeVideo} onClick={() => removeVideo(card)} disabled={busy}>Remover</button></div>}
       </article>)}</div>
       {cards.length === 0 && <p className={styles.empty}>Nenhum vídeo encontrado nesta oferta.</p>}
     </section>
     <footer className={styles.footer}><span>© {new Date().getFullYear()} Aymar Labs</span><Link href="/">Voltar ao site <ArrowUpRight /></Link></footer>
 
-    {active && <div className={styles.overlay} onMouseDown={(event) => { if (event.target === event.currentTarget) setActive(null); }}><div className={styles.playerDialog} role="dialog" aria-modal="true" aria-label={readableName(active.name)}><div className={styles.dialogHead}><div><small>{current.name} / {active.source}</small><strong>{readableName(active.name)}</strong></div><button onClick={() => setActive(null)} aria-label="Fechar vídeo"><Close /></button></div><div className={styles.player}>{active.source === 'Drive' ? <iframe src={active.src} title={readableName(active.name)} allow="autoplay; fullscreen" allowFullScreen /> : <video src={active.src} controls autoPlay playsInline />}</div><a className={styles.externalLink} href={active.external} target="_blank" rel="noopener noreferrer">Abrir arquivo em nova aba <ArrowUpRight /></a></div></div>}
+    {active && <div className={styles.overlay} onMouseDown={(event) => { if (event.target === event.currentTarget) setActive(null); }}><div className={styles.playerDialog} role="dialog" aria-modal="true" aria-label={readableName(active.name)}><div className={styles.dialogHead}><div><small>{current.name} / {active.source}</small><strong>{readableName(active.name)}</strong></div><button onClick={() => setActive(null)} aria-label="Fechar vídeo"><Close /></button></div><div className={styles.player}><video key={active.src} src={active.src} controls autoPlay playsInline preload="metadata" controlsList="nodownload noremoteplayback" disablePictureInPicture onContextMenu={(event) => event.preventDefault()} /></div></div></div>}
 
     {adminOpen && <div className={styles.overlay} onMouseDown={(event) => { if (event.target === event.currentTarget && !busy) setAdminOpen(false); }}><div className={styles.adminDialog} role="dialog" aria-modal="true" aria-label="Adicionar vídeos"><div className={styles.dialogHead}><div><small>ADMINISTRAÇÃO</small><strong>Adicionar vídeos</strong></div><button onClick={() => setAdminOpen(false)} disabled={busy} aria-label="Fechar"><Close /></button></div>
       {!uploadConfigured ? <p className={styles.adminText}>O envio de arquivos ainda não está conectado ao armazenamento neste ambiente.</p> : !authenticated ? <form onSubmit={signIn} className={styles.form}><p className={styles.adminText}>Entre com seu e-mail, username e senha de administração para enviar arquivos.</p><label>E-mail<input type="email" autoComplete="email" value={email} onChange={(event) => setEmail(event.target.value)} required /></label><label>Username<input type="text" autoComplete="nickname" placeholder="ex.: pablo.carmo" pattern="[A-Za-z0-9_.-]{3,24}" title="De 3 a 24 caracteres, sem espaços" value={username} onChange={(event) => setUsername(event.target.value)} required /></label><label>Senha<input type="password" autoComplete="current-password" value={password} onChange={(event) => setPassword(event.target.value)} required /></label><button type="submit" disabled={busy}>{busy ? 'Entrando...' : 'Entrar'}</button></form> : <form onSubmit={sendVideos} className={styles.form}><label>Oferta<select value={uploadOffer} onChange={(event) => setUploadOffer(event.target.value)}>{offers.map((offer) => <option value={offer.slug} key={offer.slug}>{offer.name} · {offer.market}</option>)}</select></label><label>Vídeos<input type="file" accept="video/mp4,video/quicktime,video/webm,video/x-m4v,.m4v" multiple onChange={(event) => setFiles(Array.from(event.target.files ?? []))} /></label><p className={styles.adminText}>MP4, MOV ou WebM. Até 1 GB por arquivo. Os novos vídeos ficam armazenados neste portfólio, separados por oferta.</p>{busy && <div className={styles.progress}><span style={{ width: `${progress}%` }} /></div>}<button type="submit" disabled={busy || !files.length}>{busy ? `Enviando ${progress}%` : `Adicionar ${files.length || ''} ${files.length === 1 ? 'vídeo' : 'vídeos'}`}</button></form>}
       {notice && <p className={styles.notice} role="status">{notice}</p>}
     </div></div>}
+
+    {editing && <div className={styles.overlay} onMouseDown={(event) => { if (event.target === event.currentTarget && !busy) setEditing(null); }}><div className={styles.adminDialog} role="dialog" aria-modal="true" aria-label="Editar vídeo"><div className={styles.dialogHead}><div><small>ADMINISTRAÇÃO</small><strong>Editar vídeo</strong></div><button onClick={() => setEditing(null)} disabled={busy} aria-label="Fechar"><Close /></button></div><form onSubmit={saveTitle} className={styles.form}><label>Título<input autoFocus maxLength={100} value={editedTitle} onChange={(event) => setEditedTitle(event.target.value)} /></label><p className={styles.adminText}>Isso altera apenas o nome exibido na biblioteca; o arquivo original não será renomeado no Drive.</p><button type="submit" disabled={busy}>{busy ? 'Salvando...' : 'Salvar alterações'}</button></form>{notice && <p className={styles.notice} role="status">{notice}</p>}</div></div>}
   </main>;
 }

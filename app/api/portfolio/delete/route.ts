@@ -1,24 +1,10 @@
-import { del, list, put } from '@vercel/blob';
+import { del, list } from '@vercel/blob';
 import { NextResponse } from 'next/server';
 import { isPortfolioAdmin } from '../../../../lib/portfolio-auth';
+import { getHiddenDriveVideoIds, saveHiddenDriveVideoIds } from '../../../../lib/portfolio-manifest';
 import { isPortfolioUploadPathname, portfolioOffers } from '../../../../lib/portfolio';
 
 export const runtime = 'nodejs';
-
-const manifestPath = 'portfolio-admin/hidden-drive-videos.json';
-
-async function readHiddenDriveVideos() {
-  const page = await list({ prefix: manifestPath, limit: 1 });
-  const manifest = page.blobs.find(({ pathname }) => pathname === manifestPath);
-  if (!manifest) return { ids: [] as string[], etag: undefined as string | undefined };
-  const response = await fetch(manifest.url, { cache: 'no-store' });
-  if (!response.ok) throw new Error('Não foi possível ler o catálogo de vídeos removidos.');
-  const data: unknown = await response.json();
-  return {
-    ids: Array.isArray(data) ? data.filter((id): id is string => typeof id === 'string') : [],
-    etag: manifest.etag,
-  };
-}
 
 export async function DELETE(request: Request) {
   if (!(await isPortfolioAdmin())) return NextResponse.json({ error: 'Acesso negado. Entre como administrador.' }, { status: 401 });
@@ -26,7 +12,7 @@ export async function DELETE(request: Request) {
   const origin = request.headers.get('origin');
   if (origin && new URL(origin).host !== request.headers.get('host')) return NextResponse.json({ error: 'Origem inválida.' }, { status: 403 });
 
-  let body: { source?: unknown; pathname?: unknown; id?: unknown; pathnames?: unknown; ids?: unknown };
+  let body: { source?: unknown; pathname?: unknown; id?: unknown; pathnames?: unknown; ids?: unknown; offer?: unknown; index?: unknown; indices?: unknown };
   try {
     body = await request.json();
   } catch {
@@ -49,22 +35,31 @@ export async function DELETE(request: Request) {
       return NextResponse.json({ deleted: blobs.length, source: 'upload' });
     }
 
+    if (body.source === 'drive' && Array.isArray(body.indices)) {
+      const offer = portfolioOffers.find((item) => item.slug === body.offer);
+      const indices = Array.from(new Set(body.indices.filter((value): value is number => Number.isInteger(value))));
+      if (!offer || !indices.length || indices.length !== body.indices.length || indices.length > 300 || indices.some((index) => index < 0 || index >= offer.videos.length)) return NextResponse.json({ error: 'Seleção de vídeos inválida.' }, { status: 400 });
+      const ids = indices.map((index) => offer.videos[index].id);
+      await saveHiddenDriveVideoIds(Array.from(new Set([...(await getHiddenDriveVideoIds()), ...ids])));
+      return NextResponse.json({ deleted: ids.length, source: 'drive' });
+    }
+
     if (body.source === 'drive' && Array.isArray(body.ids)) {
       const ids = Array.from(new Set(body.ids.filter((value): value is string => typeof value === 'string')));
-      if (!ids.length || ids.length !== body.ids.length || ids.length > 300) return NextResponse.json({ error: 'Seleção de vídeos inválida.' }, { status: 400 });
       const knownIds = new Set(portfolioOffers.flatMap((offer) => offer.videos.map(({ id }) => id)));
-      if (ids.some((id) => !knownIds.has(id))) return NextResponse.json({ error: 'Um ou mais vídeos são inválidos.' }, { status: 400 });
-      const { ids: hiddenIds, etag } = await readHiddenDriveVideos();
-      const hidden = new Set([...hiddenIds, ...ids]);
-      await put(manifestPath, JSON.stringify(Array.from(hidden)), {
-        access: 'public',
-        addRandomSuffix: false,
-        allowOverwrite: true,
-        contentType: 'application/json',
-        cacheControlMaxAge: 60,
-        ...(etag ? { ifMatch: etag } : {}),
-      });
+      if (!ids.length || ids.length !== body.ids.length || ids.length > 300 || ids.some((id) => !knownIds.has(id))) return NextResponse.json({ error: 'Seleção de vídeos inválida.' }, { status: 400 });
+      await saveHiddenDriveVideoIds(Array.from(new Set([...(await getHiddenDriveVideoIds()), ...ids])));
       return NextResponse.json({ deleted: ids.length, source: 'drive' });
+    }
+
+    if (body.source === 'drive' && typeof body.offer === 'string' && Number.isInteger(body.index)) {
+      const offer = portfolioOffers.find((item) => item.slug === body.offer);
+      const index = body.index as number;
+      if (!offer || index < 0 || index >= offer.videos.length) return NextResponse.json({ error: 'Vídeo inválido.' }, { status: 400 });
+      const ids = await getHiddenDriveVideoIds();
+      const id = offer.videos[index].id;
+      if (!ids.includes(id)) await saveHiddenDriveVideoIds([...ids, id]);
+      return NextResponse.json({ deleted: true, source: 'drive' });
     }
 
     if (body.source === 'upload' && typeof body.pathname === 'string') {
@@ -79,16 +74,9 @@ export async function DELETE(request: Request) {
     if (body.source === 'drive' && typeof body.id === 'string') {
       const knownId = portfolioOffers.some((offer) => offer.videos.some((video) => video.id === body.id));
       if (!knownId) return NextResponse.json({ error: 'Vídeo inválido.' }, { status: 400 });
-      const { ids, etag } = await readHiddenDriveVideos();
+      const ids = await getHiddenDriveVideoIds();
       if (!ids.includes(body.id)) {
-        await put(manifestPath, JSON.stringify([...ids, body.id]), {
-          access: 'public',
-          addRandomSuffix: false,
-          allowOverwrite: true,
-          contentType: 'application/json',
-          cacheControlMaxAge: 60,
-          ...(etag ? { ifMatch: etag } : {}),
-        });
+        await saveHiddenDriveVideoIds([...ids, body.id]);
       }
       return NextResponse.json({ deleted: true, source: 'drive' });
     }
