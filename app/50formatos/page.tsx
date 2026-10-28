@@ -38,7 +38,7 @@ export default function FormatosLandingPage() {
   return (
     <main className={styles.page} id="top">
       <div className={styles.promoBar}>
-        <span>Condição especial de Black Friday</span>
+        <span>CONDIÇÃO ESPECIAL DE BLACK FRIDAY</span>
       </div>
 
       <header className={styles.header}>
