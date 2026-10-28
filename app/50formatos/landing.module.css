@@ -16,9 +16,9 @@
 .page em { color: var(--blue-bright); font-style: normal; }
 .page a { color: inherit; text-decoration: none; }
 .page a:focus-visible,.page summary:focus-visible { outline: 2px solid var(--blue-bright); outline-offset: 5px; }
-.promoBar { min-height: 36px; display: flex; justify-content: center; align-items: center; gap: 22px; padding: 8px 5vw; background: #0e1b30; color: #cad8ee; font: 9px 'JetBrains Mono',monospace; letter-spacing: .08em; text-transform: uppercase; }
+.promoBar { min-height: 36px; display: flex; justify-content: center; align-items: center; gap: 22px; padding: 8px 5vw; background: #b42332; color: #fff; font: 9px 'JetBrains Mono',monospace; letter-spacing: .08em; text-transform: uppercase; }
 .promoBar a { display: inline-flex; align-items: center; gap: 7px; color: #fff; }
-.promoBar svg { width: 13px; height: 13px; color: var(--blue-bright); }
+.promoBar svg { width: 13px; height: 13px; color: #fff; }
 .header { height: 78px; padding: 0 6vw; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--line); }
 .logo { width: 126px; display: block; line-height: 0; }
 .logo img { display: block; width: 100%; height: auto; }
