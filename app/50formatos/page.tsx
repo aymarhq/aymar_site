@@ -39,7 +39,6 @@ export default function FormatosLandingPage() {
     <main className={styles.page} id="top">
       <div className={styles.promoBar}>
         <span>Condição especial de Black Friday</span>
-        <a href="#oferta">50 formatos por R$ 29,90 <ArrowRight /></a>
       </div>
 
       <header className={styles.header}>
