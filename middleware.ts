@@ -3,6 +3,11 @@ import type { NextRequest } from 'next/server';
 
 export function middleware(request: NextRequest) {
   const pathname = request.nextUrl.pathname;
+  if (pathname === '/formatosdectvs' || pathname.startsWith('/formatosdectvs/')) {
+    const destination = request.nextUrl.clone();
+    destination.pathname = `/ds${pathname.slice('/formatosdectvs'.length)}`;
+    return NextResponse.redirect(destination, 308);
+  }
   const lang = pathname === '/en' || pathname.startsWith('/en/') ? 'en' : 'pt';
   const headers = new Headers(request.headers);
   headers.set('x-aymar-lang', lang);
@@ -10,4 +15,4 @@ export function middleware(request: NextRequest) {
   return NextResponse.next({ request: { headers } });
 }
 
-export const config = { matcher: ['/', '/en', '/en/:path*', '/pt', '/pt/:path*'] };
+export const config = { matcher: ['/', '/en', '/en/:path*', '/pt', '/pt/:path*', '/formatosdectvs', '/formatosdectvs/:path*'] };
