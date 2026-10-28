@@ -29,13 +29,11 @@ export default function FormatsLogin({ configured }: { configured: boolean }) {
       <div className={styles.loginCard}><span className={styles.sectionLabel}>FORMATOS DE CTVS</span><h2>Entre para explorar.</h2>
         <form onSubmit={submit} className={styles.form}>
           <label>E-mail<input name="email" type="email" autoComplete="email" required /></label>
-          <label>Senha de acesso<input name="password" type="password" autoComplete="current-password" required /></label>
           <button type="submit" disabled={busy}>{busy ? 'Entrando…' : <>Acessar biblioteca <ArrowRight /></>}</button>
           {error && <p role="alert" className={styles.error}>{error}</p>}
         </form>
         {!configured && <p className={styles.error} role="status">O acesso ainda está sendo configurado.</p>}
-        <small>Entre com o e-mail da compra e a senha que você criou após o pagamento.</small>
-        <small>Comprou agora? Use o link de retorno da Stripe para criar seu acesso.</small>
+        <small>Use o e-mail informado na compra.</small>
       </div>
     </section>
   </main>;
