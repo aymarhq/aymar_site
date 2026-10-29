@@ -11,7 +11,7 @@ export const metadata: Metadata = {
   alternates: { canonical: 'https://www.aymarlabs.com.br/50formatos' },
 };
 
-const checkoutUrl = 'https://dvncopy.com/50f/';
+const checkoutUrl = 'https://pay.cakto.com.br/35i4ijs_1256672';
 const exampleCount = catalog.formats.reduce((total, format) => total + format.examples.length, 0);
 
 const examples = [
