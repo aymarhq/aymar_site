@@ -60,7 +60,7 @@ type CaktoPurchaseRecord = VerifiedProductPurchase & {
   updatedAt: string;
 };
 
-function blobToken() { return process.env.BLOB_READ_WRITE_TOKEN; }
+function blobToken() { return process.env.CAKTO_BLOB_READ_WRITE_TOKEN; }
 
 function privateId(value: string) {
   const token = blobToken();
@@ -114,11 +114,11 @@ export function isProductAccessId(value: unknown): value is ProductAccessId {
   return value === 'formatos' || value === 'promptsmotion' || value === 'legendas';
 }
 
-export function productAccessReady() { return Boolean(process.env.BLOB_READ_WRITE_TOKEN); }
+export function productAccessReady() { return Boolean(blobToken()); }
 
 export function productEmailReady() {
   return Boolean(
-    process.env.BLOB_READ_WRITE_TOKEN
+    blobToken()
     && process.env.CAKTO_WEBHOOK_SECRET
     && process.env.CAKTO_FORMATOS_PRODUCT_SHORT_ID
     && process.env.RESEND_API_KEY
@@ -128,7 +128,7 @@ export function productEmailReady() {
 }
 
 export function productMagicLinkReady() {
-  return Boolean(process.env.BLOB_READ_WRITE_TOKEN && process.env.RESEND_API_KEY && process.env.RESEND_FROM_EMAIL && process.env.APP_URL);
+  return Boolean(blobToken() && process.env.RESEND_API_KEY && process.env.RESEND_FROM_EMAIL && process.env.APP_URL);
 }
 
 export function productsForCaktoProduct(productData: unknown): ProductAccessId[] {

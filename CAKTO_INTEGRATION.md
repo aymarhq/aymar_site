@@ -11,7 +11,7 @@ No projeto da Aymar Labs na Vercel, configure em Production:
 | `CAKTO_WEBHOOK_SECRET` | A mesma chave criada no cadastro do webhook da Cakto. Nunca colocar no código ou no Git. |
 | `CAKTO_FORMATOS_PRODUCT_SHORT_ID` | ID curto do produto. Para o link atual: `35i4ijs`. |
 | `CAKTO_FORMATOS_PRODUCT_ID` | Opcional; ID interno do produto mostrado no payload Cakto. |
-| `BLOB_READ_WRITE_TOKEN` | Armazenamento privado de compras, contas e links de acesso. |
+| `CAKTO_BLOB_READ_WRITE_TOKEN` | Token do Blob privado de compras, contas e links de acesso. |
 | `RESEND_API_KEY` | Envio dos e-mails de ativação e login. |
 | `RESEND_FROM_EMAIL` | Remetente em domínio verificado, por exemplo `Aymar Labs <acesso@aymarlabs.com.br>`. |
 | `APP_URL` | `https://www.aymarlabs.com.br`. |

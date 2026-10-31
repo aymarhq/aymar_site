@@ -1,10 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { activateProductAccount } from '../../../../lib/product-access';
+import { activateProductAccount, productAccessReady } from '../../../../lib/product-access';
 
 export const runtime = 'nodejs';
 
 export async function POST(request: NextRequest) {
-  if (!process.env.BLOB_READ_WRITE_TOKEN) return NextResponse.json({ error: 'O acesso ainda está sendo configurado.' }, { status: 503 });
+  if (!productAccessReady()) return NextResponse.json({ error: 'O acesso ainda está sendo configurado.' }, { status: 503 });
   const origin = request.headers.get('origin');
   if (origin && new URL(origin).host !== request.headers.get('host')) return NextResponse.json({ error: 'Origem inválida.' }, { status: 403 });
   const body = await request.json().catch(() => null) as { token?: unknown } | null;

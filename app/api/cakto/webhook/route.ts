@@ -1,6 +1,7 @@
 import { createHmac, timingSafeEqual } from 'node:crypto';
 import { NextRequest, NextResponse } from 'next/server';
 import {
+  productAccessReady,
   productEmailReady,
   productsForCaktoProduct,
   provisionPurchase,
@@ -42,7 +43,7 @@ function validEmail(value: unknown): value is string {
 
 export async function POST(request: NextRequest) {
   const secret = process.env.CAKTO_WEBHOOK_SECRET;
-  if (!secret || !process.env.BLOB_READ_WRITE_TOKEN) {
+  if (!secret || !productAccessReady()) {
     return NextResponse.json({ error: 'Webhook da Cakto não configurado.' }, { status: 503 });
   }
 
