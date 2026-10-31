@@ -1,13 +1,12 @@
 import { del } from '@vercel/blob';
 import { NextResponse } from 'next/server';
-import { sameOrigin } from '../../../../lib/legendas-auth';
-import { portfolioSession } from '../../../../lib/portfolio-auth';
+import { legendasIdentity, sameOrigin } from '../../../../lib/legendas-auth';
 
 export const runtime = 'nodejs';
 
 export async function DELETE(request: Request) {
   if (!sameOrigin(request)) return NextResponse.json({ error: 'Origem inválida.' }, { status: 403 });
-  const session = await portfolioSession();
+  const session = await legendasIdentity();
   if (!session) return NextResponse.json({ error: 'Acesso negado.' }, { status: 401 });
   const body = await request.json().catch(() => null) as { url?: unknown } | null;
   const value = typeof body?.url === 'string' ? body.url : '';

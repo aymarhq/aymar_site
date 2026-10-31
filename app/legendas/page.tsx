@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import { deepgramStatus } from '../../lib/legendas-auth';
 import { portfolioSession } from '../../lib/portfolio-auth';
+import { productMagicLinkReady, productSession } from '../../lib/product-access';
 import LegendasClient from './legendas-client';
 import LegendasLogin from './legendas-login';
 
@@ -12,8 +13,10 @@ export const metadata: Metadata = {
 };
 
 export default async function LegendasPage() {
-  const session = await portfolioSession();
-  if (!session) return <LegendasLogin configured={Boolean(process.env.PORTFOLIO_ADMIN_PASSWORD || process.env.PORTFOLIO_STUDENT_PASSWORD)} />;
+  const portfolio = await portfolioSession();
+  const buyer = portfolio?.role === 'admin' ? null : await productSession('legendas');
+  const username = portfolio?.role === 'admin' ? portfolio.username : buyer?.username;
+  if (!username) return <LegendasLogin configured={productMagicLinkReady()} />;
   const deepgram = await deepgramStatus();
-  return <LegendasClient username={session.username} initialKeyConfigured={deepgram.configured} />;
+  return <LegendasClient username={username} initialKeyConfigured={deepgram.configured} />;
 }
