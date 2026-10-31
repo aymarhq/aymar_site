@@ -1,6 +1,7 @@
 import { createCipheriv, createDecipheriv, createHash, randomBytes } from 'node:crypto';
 import { cookies } from 'next/headers';
 import { portfolioSession } from './portfolio-auth';
+import { productSession } from './product-access';
 
 const COOKIE = 'aymar_deepgram_key';
 const WEEK = 7 * 24 * 60 * 60;
@@ -40,16 +41,21 @@ function decrypt(value: string) {
   }
 }
 
+export async function legendasIdentity() {
+  const portfolio = await portfolioSession();
+  if (portfolio?.role === 'admin') return { username: portfolio.username };
+  const buyer = await productSession('legendas');
+  return buyer ? { username: buyer.username } : null;
+}
+
 export async function deepgramKey() {
-  const session = await portfolioSession();
-  if (!session) return null;
+  if (!(await legendasIdentity())) return null;
   const personal = (await cookies()).get(COOKIE)?.value;
   return personal ? decrypt(personal) : null;
 }
 
 export async function deepgramStatus() {
-  const session = await portfolioSession();
-  if (!session) return { authenticated: false, configured: false };
+  if (!(await legendasIdentity())) return { authenticated: false, configured: false };
   const personal = (await cookies()).get(COOKIE)?.value;
   return { authenticated: true, configured: Boolean(personal && decrypt(personal)) };
 }

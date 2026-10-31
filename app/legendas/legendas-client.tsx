@@ -801,7 +801,7 @@ export default function LegendasClient({ username, initialKeyConfigured }: { use
     }
   }
 
-  async function signOut() { await fetch('/api/portfolio/session', { method: 'DELETE' }); router.refresh(); }
+  async function signOut() { await Promise.all([fetch('/api/product-access/login', { method: 'DELETE' }), fetch('/api/portfolio/session', { method: 'DELETE' })]); router.refresh(); }
   function reset() { setStage('upload'); setBatchMode(false); setBatchItems([]); setActiveBatchId(''); setFile(null); setRemoteUrl(''); setCaptions([]); setVideoInfo(null); setVideoBox(null); setProgress(0); setMessage(''); if (previewUrl.startsWith('blob:')) URL.revokeObjectURL(previewUrl); setPreviewUrl(''); }
 
   return <main className={styles.page}>

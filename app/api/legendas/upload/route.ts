@@ -1,7 +1,6 @@
 import { handleUpload, type HandleUploadBody } from '@vercel/blob/client';
 import { NextResponse } from 'next/server';
-import { sameOrigin } from '../../../../lib/legendas-auth';
-import { portfolioSession } from '../../../../lib/portfolio-auth';
+import { legendasIdentity, sameOrigin } from '../../../../lib/legendas-auth';
 
 export const runtime = 'nodejs';
 
@@ -17,7 +16,7 @@ export async function POST(request: Request) {
       body,
       request,
       onBeforeGenerateToken: async (pathname) => {
-        const session = await portfolioSession();
+        const session = await legendasIdentity();
         if (!session) throw new Error('Entre na área exclusiva para enviar vídeos.');
         const expectedPrefix = `legendas/${session.username}/`;
         if (!pathname.startsWith(expectedPrefix) || !/\.(?:mp4|mov|webm|m4v)$/i.test(pathname)) throw new Error('Nome ou formato de vídeo inválido.');
