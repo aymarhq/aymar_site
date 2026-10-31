@@ -75,7 +75,7 @@ export default function FormatsLibrary({ catalog, username }: { catalog: Formats
       })}</div>
     </section>
 
-    <footer className={styles.footer}><div><span>© {new Date().getFullYear()} Aymar Labs</span><small>Conteúdo do acervo Serraglio / DVN Copy, reproduzido com autorização.</small></div><div className={styles.footerLinks}><Link href="/portfoliodectvs">Portfólio de CTVs <ArrowUpRight /></Link><Link href="/promptsmotion">Prompts Motion <ArrowUpRight /></Link><button onClick={async () => { await Promise.all([fetch('/api/checkout/formatos/login', { method: 'DELETE' }), fetch('/api/portfolio/session', { method: 'DELETE' })]); router.refresh(); }}>Sair</button></div></footer>
+    <footer className={styles.footer}><div><span>© {new Date().getFullYear()} Aymar Labs</span><small>Conteúdo do acervo Serraglio / DVN Copy, reproduzido com autorização.</small></div><div className={styles.footerLinks}><Link href="/portfoliodectvs">Portfólio de CTVs <ArrowUpRight /></Link><Link href="/promptsmotion">Prompts Motion <ArrowUpRight /></Link><button onClick={async () => { await Promise.all([fetch('/api/product-access/login', { method: 'DELETE' }), fetch('/api/portfolio/session', { method: 'DELETE' })]); router.refresh(); }}>Sair</button></div></footer>
 
     <dialog ref={dialog} className={styles.dialog} aria-labelledby="format-title" onClose={() => { setActive(null); setPlaying(false); }} onClick={(event) => { if (event.target === event.currentTarget) dialog.current?.close(); }}>
       {active && <div className={styles.dialogInner}>

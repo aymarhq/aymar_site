@@ -14,9 +14,11 @@ export async function POST(request: Request) {
   if (origin && new URL(origin).host !== request.headers.get('host')) return NextResponse.json({ error: 'Origem inválida.' }, { status: 403 });
   const body = await request.json().catch(() => null) as { email?: unknown; username?: unknown; password?: unknown } | null;
   const email = typeof body?.email === 'string' ? body.email.trim() : '';
-  const username = typeof body?.username === 'string' ? body.username.trim() : '';
+  const suppliedUsername = typeof body?.username === 'string' ? body.username.trim() : '';
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return NextResponse.json({ error: 'Informe um e-mail válido.' }, { status: 400 });
-  if (!/^[a-zA-Z0-9_.-]{3,24}$/.test(username)) return NextResponse.json({ error: 'Escolha um username de 3 a 24 caracteres, sem espaços.' }, { status: 400 });
+  const emailName = email.split('@')[0].normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-zA-Z0-9_.-]/g, '-');
+  const username = suppliedUsername || (emailName.length >= 3 ? emailName : `u-${emailName || 'user'}`).slice(0, 24);
+  if (!/^[a-zA-Z0-9_.-]{3,24}$/.test(username)) return NextResponse.json({ error: 'Nome de usuário inválido.' }, { status: 400 });
   const role = typeof body?.password === 'string' ? checkPassword(email, body.password) : null;
   if (!role) {
     return NextResponse.json({ error: 'Senha incorreta.' }, { status: 401 });

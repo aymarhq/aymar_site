@@ -1,6 +1,5 @@
 import { NextResponse } from 'next/server';
-import { deepgramCookie, deepgramCookieName, deepgramStatus, sameOrigin } from '../../../../lib/legendas-auth';
-import { portfolioSession } from '../../../../lib/portfolio-auth';
+import { deepgramCookie, deepgramCookieName, deepgramStatus, legendasIdentity, sameOrigin } from '../../../../lib/legendas-auth';
 
 export const runtime = 'nodejs';
 
@@ -10,7 +9,7 @@ export async function GET() {
 }
 
 export async function POST(request: Request) {
-  if (!(await portfolioSession())) return NextResponse.json({ error: 'Entre na área exclusiva para continuar.' }, { status: 401 });
+  if (!(await legendasIdentity())) return NextResponse.json({ error: 'Entre na área exclusiva para continuar.' }, { status: 401 });
   if (!sameOrigin(request)) return NextResponse.json({ error: 'Origem inválida.' }, { status: 403 });
   const body = await request.json().catch(() => null) as { apiKey?: unknown } | null;
   const apiKey = typeof body?.apiKey === 'string' ? body.apiKey.trim() : '';

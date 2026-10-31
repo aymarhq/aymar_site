@@ -2,9 +2,11 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import BrandLogo from '../../components/BrandLogo';
 import { ArrowUpRight, Close, Search } from '../../components/Icon';
 import { motionCategories, type MotionEntry } from '../../lib/prompt-motion-shared';
+import { SUPPORT_URL } from '../../lib/site-links';
 import styles from './prompt-motion.module.css';
 
 const categoryNames: Record<string, string> = Object.fromEntries(motionCategories);
@@ -44,6 +46,7 @@ function Preview({ entry, paused }: { entry: MotionEntry; paused: boolean }) {
 }
 
 export default function PromptMotion({ entries }: { entries: MotionEntry[] }) {
+  const router = useRouter();
   const [query, setQuery] = useState('');
   const [kind, setKind] = useState('all');
   const [categories, setCategories] = useState<string[]>([]);
@@ -182,6 +185,8 @@ export default function PromptMotion({ entries }: { entries: MotionEntry[] }) {
     <header className={styles.header}>
       <BrandLogo size="sm" className={styles.logo} href="/" label="Aymar Labs, página inicial" />
       <span className={styles.headerLabel}>Biblioteca de motion</span>
+      <a className={styles.back} href={SUPPORT_URL} target="_blank" rel="noopener noreferrer" aria-label="Suporte (abre em nova aba)">Suporte <ArrowUpRight /></a>
+      <button className={styles.signOut} type="button" onClick={async () => { await Promise.all([fetch('/api/product-access/login', { method: 'DELETE' }), fetch('/api/portfolio/session', { method: 'DELETE' })]); router.refresh(); }}>Sair</button>
     </header>
 
     <section className={styles.hero}>

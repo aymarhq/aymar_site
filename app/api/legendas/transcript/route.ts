@@ -1,13 +1,12 @@
 import { NextResponse } from 'next/server';
-import { deepgramKey, isAllowedMediaUrl, sameOrigin } from '../../../../lib/legendas-auth';
-import { portfolioSession } from '../../../../lib/portfolio-auth';
+import { deepgramKey, isAllowedMediaUrl, legendasIdentity, sameOrigin } from '../../../../lib/legendas-auth';
 
 export const runtime = 'nodejs';
 export const maxDuration = 300;
 const languages = new Set(['pt', 'en', 'es', 'fr', 'de', 'it', 'nl', 'pl']);
 
 async function authorizedKey() {
-  if (!(await portfolioSession())) return null;
+  if (!(await legendasIdentity())) return null;
   return deepgramKey();
 }
 

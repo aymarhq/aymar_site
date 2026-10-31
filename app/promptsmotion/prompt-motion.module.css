@@ -29,7 +29,27 @@
 .promptStatus button{margin-left:8px;border:0;border-bottom:1px solid #555;background:none;color:#f5f4ef;font:inherit;cursor:pointer}
 @media(max-width:760px){.dialog{width:calc(100vw - 20px)}.dialogHead{padding:12px 14px 9px}.fullPlayer{padding:0 12px}.fullPlayer video{max-height:47dvh}.promptPanel{padding:16px 16px 20px}.promptContent pre,.promptContent p{font-size:13px}}
 
+.accessLayout{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(300px,440px);gap:8vw;align-items:center;padding:clamp(80px,10vw,150px) 5.5vw}
+.accessLayout h1{max-width:900px;font-size:clamp(58px,7.8vw,118px);line-height:.94;letter-spacing:-.085em;margin:55px 0 30px}
+.accessLayout h1 em{color:#0a84ff;font-style:italic}
+.accessLayout>div>p{max-width:450px;color:#aaa;font-size:16px;line-height:1.5}
+.accessCard{border:1px solid #333;background:#121212;padding:30px}
+.accessCard>span{font:10px 'JetBrains Mono',monospace;letter-spacing:.08em;color:#0a84ff}
+.accessCard h2{font-size:32px;line-height:1;letter-spacing:-.065em;margin:28px 0 22px}
+.accessCard form{display:grid;gap:18px}
+.accessCard label{display:grid;gap:8px;color:#aaa;font-size:11px;letter-spacing:.06em;text-transform:uppercase}
+.accessCard input{width:100%;padding:13px;border:1px solid #444;border-radius:0;background:#0c0c0c;color:#fff;outline:none}
+.accessCard input:focus{border-color:#0a84ff}
+.accessCard form button{display:flex;align-items:center;justify-content:center;gap:8px;border:0;padding:14px;background:#0a84ff;color:#090909;font:700 11px 'JetBrains Mono',monospace;text-transform:uppercase;cursor:pointer}
+.accessCard form button:disabled{opacity:.55;cursor:wait}
+.accessCard form button .ui-icon{width:16px;height:16px}
+.accessCard form p,.accessCard>p{color:#b6d8ff;font-size:13px;line-height:1.5}
+.accessCard>small{display:block;margin-top:20px;color:#777;font:9px 'JetBrains Mono',monospace;letter-spacing:.04em;text-transform:uppercase}
+@media(max-width:760px){.accessLayout{display:block;padding:80px 5vw 70px}.accessLayout h1{font-size:clamp(52px,13vw,82px);margin:40px 0 26px}.accessLayout>div>p{font-size:14px}.accessCard{margin-top:60px;padding:22px}}
+
 .back,.footer>a,.promptButton,.empty button,.previewCaption{display:flex;align-items:center}
+.signOut{border:0;padding:0;background:none;color:#bbb;font:10px 'JetBrains Mono',monospace;letter-spacing:.055em;text-transform:uppercase;cursor:pointer}
+.signOut:hover{color:#0a84ff}
 .search>.ui-icon{width:17px;height:17px;margin:0;flex:none}
 .search button{display:grid;place-items:center;width:28px;height:28px;padding:0;font-size:0}
 .search button .ui-icon,.results button .ui-icon{display:block;width:15px;height:15px;margin:0}
