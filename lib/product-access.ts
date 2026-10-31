@@ -199,7 +199,14 @@ function formatsAccessEmailAllowed(email: string) {
 async function getOrCreateFormatsAccount(email: string) {
   const normalizedEmail = normalizeEmail(email);
   const allowlisted = formatsAccessEmailAllowed(normalizedEmail);
-  const legacy = await getFormatsAccount(normalizedEmail);
+  // Legacy format accounts were stored separately. A failure to read that old
+  // store must not block an allowlisted user from receiving a new access link.
+  let legacy = null;
+  try {
+    legacy = await getFormatsAccount(normalizedEmail);
+  } catch {
+    // Continue with the current private product-access store below.
+  }
   let account = await getProductAccount(normalizedEmail);
 
   if (account) {
