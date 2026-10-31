@@ -420,7 +420,22 @@ async function sendProductMagicLinkEmail(email: string, token: string, product: 
     method: 'POST', headers: { Authorization: `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
     body: JSON.stringify({ from, to: [email], subject: 'Seu link de acesso | Aymar Labs', html }), cache: 'no-store',
   });
-  if (!response.ok) throw new Error('Não foi possível enviar o link de acesso');
+  if (!response.ok) {
+    const details = await response.json().catch(() => null) as { name?: unknown; code?: unknown; message?: unknown } | null;
+    const providerCode = [details?.name, details?.code].find((value): value is string => typeof value === 'string' && /^[a-z0-9_-]{1,60}$/i.test(value));
+    const providerMessage = typeof details?.message === 'string'
+      ? details.message
+        .replace(/[\w.+-]+@[\w.-]+\.[A-Z]{2,}/gi, '[email redigido]')
+        .replace(/\bBearer\s+\S+/gi, 'Bearer [redigido]')
+        .slice(0, 300)
+      : undefined;
+    console.error('[product-access] Resend rejected magic-link email', {
+      status: response.status,
+      code: providerCode,
+      message: providerMessage,
+    });
+    throw new Error('Não foi possível enviar o link de acesso');
+  }
 }
 
 export const productAccessCookieName = SESSION_COOKIE;
