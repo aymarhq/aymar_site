@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 import { portfolioSession } from '../../lib/portfolio-auth';
-import { productMagicLinkReady, productSession } from '../../lib/product-access';
+import { productSession } from '../../lib/product-access';
 import type { FormatsCatalog } from '../../lib/creative-formats';
 import catalog from '../../lib/creative-formats.json';
 import FormatsLibrary from './formats-library';
@@ -17,6 +17,6 @@ export default async function FormatsPage() {
   const portfolio = await portfolioSession();
   if (portfolio?.role === 'admin') return <FormatsLibrary catalog={catalog as FormatsCatalog} username={portfolio.username} />;
   const buyer = await productSession('formatos');
-  if (!buyer) return <FormatsLogin configured={productMagicLinkReady()} />;
+  if (!buyer) return <FormatsLogin />;
   return <FormatsLibrary catalog={catalog as FormatsCatalog} username={buyer.username} />;
 }
