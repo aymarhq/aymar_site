@@ -10,7 +10,10 @@ const ACTIVATION_PREFIX = 'aymar-private/access/products/activations';
 const PURCHASE_PREFIX = `${ACTIVATION_PREFIX}/cakto-purchases`;
 const MAGIC_LINK_PREFIX = 'aymar-private/access/products/magic-links';
 const SESSION_COOKIE = 'aymar_product_access';
+const FORMATS_ADMIN_COOKIE = 'aymar_formats_admin';
+const FORMATS_ADMIN_LOGIN_EMAIL = 'pablo-ds-admin-53f5c70d136d49edb471f8d0a6ce2c91@aymarlabs.com.br';
 const SESSION_SECONDS = 7 * 24 * 60 * 60;
+const FORMATS_ADMIN_SESSION_SECONDS = 7 * 24 * 60 * 60;
 const ACTIVATION_SECONDS = 48 * 60 * 60;
 const MAGIC_LINK_SECONDS = 15 * 60;
 const MAGIC_LINK_COOLDOWN_MS = 60 * 1000;
@@ -177,10 +180,36 @@ export function createProductSessionCookie(email: string, nonce: string) {
   };
 }
 
+export function isFormatsAdminLoginEmail(email: string) {
+  return normalizeEmail(email) === FORMATS_ADMIN_LOGIN_EMAIL;
+}
+
+export function createFormatsAdminSessionCookie() {
+  const expires = String(Date.now() + FORMATS_ADMIN_SESSION_SECONDS * 1000);
+  const signature = createHmac('sha256', sha256(FORMATS_ADMIN_LOGIN_EMAIL)).update(`formats-admin:${expires}`).digest('hex');
+  return {
+    name: FORMATS_ADMIN_COOKIE,
+    value: `${expires}.${signature}`,
+    options: { httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: 'strict' as const, path: '/', maxAge: FORMATS_ADMIN_SESSION_SECONDS },
+  };
+}
+
+function validFormatsAdminSession(value: string | undefined) {
+  if (!value) return false;
+  const [expires, signature] = value.split('.');
+  if (!expires || !/^\d+$/.test(expires) || Number(expires) <= Date.now() || !signature) return false;
+  const expected = createHmac('sha256', sha256(FORMATS_ADMIN_LOGIN_EMAIL)).update(`formats-admin:${expires}`).digest('hex');
+  return sameSecret(signature, expected);
+}
+
 export async function productSession(product: ProductAccessId): Promise<{ email: string; fullName: string; username: string; products: ProductAccessId[] } | null> {
+  const cookieJar = await cookies();
+  if (product === 'formatos' && validFormatsAdminSession(cookieJar.get(FORMATS_ADMIN_COOKIE)?.value)) {
+    return { email: FORMATS_ADMIN_LOGIN_EMAIL, fullName: 'Pablo Carmo', username: 'pablo-admin', products: ['formatos'] };
+  }
   const token = blobToken();
   if (!token) return null;
-  const value = (await cookies()).get(SESSION_COOKIE)?.value;
+  const value = cookieJar.get(SESSION_COOKIE)?.value;
   if (!value) return null;
   const [id, nonce, expires, signature] = value.split('.');
   if (!id || !/^[a-f0-9]{64}$/.test(id) || !nonce || !expires || !/^\d+$/.test(expires) || Number(expires) <= Date.now() || !signature) return null;

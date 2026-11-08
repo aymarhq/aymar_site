@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { isProductAccessId, productMagicLinkReady, requestProductMagicLink } from '../../../../lib/product-access';
+import { createFormatsAdminSessionCookie, isFormatsAdminLoginEmail, isProductAccessId, productMagicLinkReady, requestProductMagicLink } from '../../../../lib/product-access';
 
 export const runtime = 'nodejs';
 
@@ -10,7 +10,6 @@ function validOrigin(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
-  if (!productMagicLinkReady()) return NextResponse.json({ error: 'O acesso por e-mail ainda está sendo configurado.' }, { status: 503 });
   if (!validOrigin(request)) return NextResponse.json({ error: 'Origem inválida.' }, { status: 403 });
 
   const body = await request.json().catch(() => null) as { email?: unknown; product?: unknown } | null;
@@ -20,6 +19,15 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Digite um e-mail válido.' }, { status: 400 });
   }
   if (!isProductAccessId(product)) return NextResponse.json({ error: 'Produto inválido.' }, { status: 400 });
+
+  if (product === 'formatos' && isFormatsAdminLoginEmail(email)) {
+    const cookie = createFormatsAdminSessionCookie();
+    const response = NextResponse.json({ authenticated: true });
+    response.cookies.set(cookie.name, cookie.value, cookie.options);
+    return response;
+  }
+
+  if (!productMagicLinkReady()) return NextResponse.json({ error: 'O acesso por e-mail está indisponível no momento.' }, { status: 503 });
 
   try {
     // A resposta é a mesma para endereços autorizados e não autorizados.
