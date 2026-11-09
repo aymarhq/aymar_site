@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 import { list } from '@vercel/blob';
-import { portfolioOffers } from '../../lib/portfolio';
+import { portfolioPageOffers } from '../../lib/portfolio';
 import { getHiddenDriveVideoIds, getPortfolioVideoTitles } from '../../lib/portfolio-manifest';
 import { portfolioSession, uploadIsConfigured } from '../../lib/portfolio-auth';
 import PortfolioClient, { type LibraryOffer, type StoredVideo } from './portfolio-client';
@@ -33,7 +33,7 @@ export default async function PortfolioPage() {
   const session = await portfolioSession();
   const [uploads, hiddenDriveVideos, titles] = await Promise.all([getStoredVideos(), getHiddenDriveVideoIds(), getPortfolioVideoTitles()]);
   const hiddenIds = new Set(hiddenDriveVideos);
-  const offers: LibraryOffer[] = portfolioOffers.map((offer) => {
+  const offers: LibraryOffer[] = portfolioPageOffers.map((offer) => {
     const driveVideos = offer.videos.flatMap((video, index) => {
       if (hiddenIds.has(video.id)) return [];
       const key = `drive:${offer.slug}:${index}`;

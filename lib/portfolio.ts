@@ -135,6 +135,20 @@ export const portfolioOffers: PortfolioOffer[] = [
   },
 ];
 
+const portfolioPageOrder = [
+  'doces-cravejados-br',
+  'papo-cheio-br',
+  'posavasos-de-crochet-mx',
+  'postres-sin-horno-mx',
+  'recetas-para-hijo-mx',
+  'paletas-mx',
+];
+
+export const portfolioPageOffers = portfolioPageOrder.flatMap((slug) => {
+  const offer = portfolioOffers.find((item) => item.slug === slug);
+  return offer ? [offer] : [];
+});
+
 const portfolioOfferSlugs = new Set(portfolioOffers.map(({ slug }) => slug));
 
 export function isPortfolioUploadPathname(pathname: string) {
